@@ -1,4 +1,4 @@
-import { App, Plugin, PluginSettingTab, Setting, TFile } from 'obsidian';
+import { App, getLinkpath, Plugin, PluginSettingTab, Setting, TFile } from 'obsidian';
 
 export default class MyPlugin extends Plugin {
 	settings: Settings;
@@ -22,18 +22,10 @@ export default class MyPlugin extends Plugin {
 						return
 					let rawLinks = this.app.metadataCache.getFileCache(markFile).links ?? [];
 					let rawEmbeds = this.app.metadataCache.getFileCache(markFile).embeds ?? [];
-
 					rawLinks.concat(rawEmbeds).forEach(link => {
-						let linkText: string;
-						if (link.link.contains("#"))
-							linkText = link.link.substring(0, link.link.lastIndexOf("#"));
-						else
-							linkText = link.link;
-						let txt = this.app.metadataCache.getFirstLinkpathDest(linkText, markFile.path);
+						let txt = this.app.metadataCache.getFirstLinkpathDest(getLinkpath(link.link), markFile.path);
 						if (txt != null)
 							links.push(txt.path);
-
-
 					});
 				});
 
