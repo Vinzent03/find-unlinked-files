@@ -1,7 +1,7 @@
 {
   "name": "find-unlinked-files",
   "version": "0.1.0",
-  "description": "Find files, which are nowhere linked, so they are maybe lost in your vault.",
+  "description": "Find files that are not linked anywhere and would otherwise be lost",
   "main": "main.js",
   "scripts": {
     "dev": "rollup --config rollup.config.js -w",
