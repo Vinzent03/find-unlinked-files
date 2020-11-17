@@ -1,36 +1,35 @@
-import { App, getLinkpath, Plugin, PluginSettingTab, Setting, TFile } from 'obsidian';
+import { App, getLinkpath, iterateCacheRefs, Plugin, PluginSettingTab, Setting, TFile } from 'obsidian';
 
+interface Settings {
+	disableWorkingLinks: boolean;
+}
 export default class MyPlugin extends Plugin {
 	settings: Settings;
 	async onload() {
 		console.log('loading ' + this.manifest.name);
 
-		this.settings = await this.loadData() || new Settings();
+		this.settings = await this.loadData() ?? { disableWorkingLinks: false }
 
 		this.addCommand({
 			id: 'find-unlinked-files',
 			name: 'Find unlinked files',
-			callback: () => {
+			callback: async () => {
 				let outFile = this.manifest.name + " plugin output.md";
 				let files = this.app.vault.getFiles();
 				let markdownFiles = this.app.vault.getMarkdownFiles();
-				let links: String[]
-				links = [];
+				let links: String[] = [];
 
 				markdownFiles.forEach((markFile: TFile) => {
 					if (markFile.path == outFile)
 						return
-					let rawLinks = this.app.metadataCache.getFileCache(markFile).links ?? [];
-					let rawEmbeds = this.app.metadataCache.getFileCache(markFile).embeds ?? [];
-					rawLinks.concat(rawEmbeds).forEach(link => {
-						let txt = this.app.metadataCache.getFirstLinkpathDest(getLinkpath(link.link), markFile.path);
+					iterateCacheRefs(this.app.metadataCache.getFileCache(markFile), cb => {
+						let txt = this.app.metadataCache.getFirstLinkpathDest(getLinkpath(cb.link), markFile.path);
 						if (txt != null)
 							links.push(txt.path);
 					});
 				});
 
-				let notLinkedFiles: TFile[];
-				notLinkedFiles = [];
+				let notLinkedFiles: TFile[] = [];
 
 				files.forEach((file: TFile) => {
 					if (file.path == outFile)
@@ -50,9 +49,8 @@ export default class MyPlugin extends Plugin {
 				notLinkedFiles.forEach((file) => {
 					text += prefix + "- [[" + this.app.metadataCache.fileToLinktext(file, "/") + "]]\n";
 				});
-				this.app.vault.adapter.write(outFile, text).then(() => {
-					this.app.workspace.openLinkText(outFile, "/")
-				});
+				await this.app.vault.adapter.write(outFile, text);
+				this.app.workspace.openLinkText(outFile, "/");
 			},
 		});
 		this.addSettingTab(new SettingsTab(this.app, this))
@@ -62,9 +60,6 @@ export default class MyPlugin extends Plugin {
 		console.log('unloading ' + this.manifest.name);
 	}
 
-}
-class Settings {
-	disableWorkingLinks: boolean = false;
 }
 
 class SettingsTab extends PluginSettingTab {
