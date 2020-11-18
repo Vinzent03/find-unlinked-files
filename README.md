@@ -12,10 +12,18 @@ Call the command `Find unlinked files` and an the file `Find unlinked files plug
 Custom plugins are only available for Obsidian v0.9.7+.
 
 ## TODO:
-- [ ] add directories to ignore
-- [ ] add file extensions to ignore
+- [x] add directories to ignore
+- [x] add file extensions to ignore
 
 ## Installing
+### From within Obsidian
+1. Open settings -> Third party plugin
+2. Disable Safe mode
+3. Click Browse community plugins
+4. Search for "Find unlinked files"
+5. Install it
+6. Activate it under Installed plugins
+
 
 ### From GitHub
 1. Download the [latest release](https://github.com/Vinzent03/find-unlinked-files/releases/latest)
