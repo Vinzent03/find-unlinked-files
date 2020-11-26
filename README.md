@@ -1,7 +1,9 @@
-# Find unlinked files
+# Find unlinked files (files with no backlinks)
 
 ## Info
-This plugin goes through your whole vault and searches for files, which are linked nowhere. In the end, it will create a file with a list of links to these unlinked files. Now you can either delete this unused files or link them somewhere in your vault.
+This plugin goes through your whole vault and searches for files, which are linked nowhere. In other words: Files with no backlinks.
+
+In the end, it will create a file with a list of links to these unlinked files. Now you can either delete this unused files or link them somewhere in your vault.
 
 **Important:** I have not tested the performance in big vaults.
 
