@@ -4,6 +4,7 @@ interface Settings {
 	disableWorkingLinks: boolean;
 	directoriesToIgnore: string[];
 	filesToIgnore: string[];
+	fileTypesToIgnore: string[];
 }
 export default class MyPlugin extends Plugin {
 	settings: Settings;
@@ -14,6 +15,7 @@ export default class MyPlugin extends Plugin {
 			disableWorkingLinks: tempData?.disableWorkingLinks ?? false,
 			directoriesToIgnore: tempData?.directoriesToIgnore ?? [],
 			filesToIgnore: tempData?.filesToIgnore ?? [],
+			fileTypesToIgnore: tempData?.fileTypesToIgnore ?? [],
 		}
 
 		this.addCommand({
@@ -39,9 +41,14 @@ export default class MyPlugin extends Plugin {
 
 				files.forEach((file: TFile) => {
 					if (file.path == outFile)
-						return
+						return;
+
+					//filetypes to ignore by default
 					if (["css"].contains(file.extension))
-						return
+						return;
+					if (this.settings.fileTypesToIgnore.contains(file.extension))
+						return;
+
 					let ignoreBecauseOfDirectory = false;
 					this.settings.directoriesToIgnore.forEach(value => {
 						if (file.path.startsWith(value) && value.length != 0)
@@ -120,6 +127,17 @@ class SettingsTab extends PluginSettingTab {
 				.onChange((value) => {
 					let paths = value.trim().split("\n").map(value => formatPath(value, false));
 					this.plugin.settings.filesToIgnore = paths;
+					this.plugin.saveData(this.plugin.settings);
+				}));
+		new Setting(containerEl)
+			.setName("Filetypes to ignore.")
+			.setDesc("Add each filetype separated by comma")
+			.addTextArea(cb => cb
+				.setPlaceholder("docx,txt")
+				.setValue(this.plugin.settings.fileTypesToIgnore.join(","))
+				.onChange((value) => {
+					let paths = value.trim().split(",");
+					this.plugin.settings.fileTypesToIgnore = paths;
 					this.plugin.saveData(this.plugin.settings);
 				}));
 
