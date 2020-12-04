@@ -77,7 +77,16 @@ export default class MyPlugin extends Plugin {
 					text += prefix + "- [[" + this.app.metadataCache.fileToLinktext(file, "/") + "]]\n";
 				});
 				await this.app.vault.adapter.write(outFile, text);
-				this.app.workspace.openLinkText(outFile, "/");
+
+				let fileIsAlreadyOpened = false;
+
+				this.app.workspace.iterateAllLeaves(leaf => {
+					if (outFile.startsWith(leaf.getDisplayText())) {
+						fileIsAlreadyOpened = true;
+					}
+				})
+				if (!fileIsAlreadyOpened)
+					this.app.workspace.openLinkText(outFile, "/", true);
 			},
 		});
 		this.addSettingTab(new SettingsTab(this.app, this))
