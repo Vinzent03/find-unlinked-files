@@ -3,7 +3,7 @@
 ## Info
 This plugin goes through your whole vault and searches for files, which are linked nowhere. In other words: Files with no backlinks.
 
-In the end, it will create a file with a list of links to these unlinked files. Now you can either delete this unused files or link them somewhere in your vault.
+In the end, it will create a file with a list of links to these unlinked files. Now you can either delete these unused files or link them somewhere in your vault.
 
 **Important:** I have not tested the performance in big vaults.
 
@@ -18,7 +18,7 @@ Custom plugins are only available for Obsidian v0.9.7+.
 - [x] add file extensions to ignore
 
 ## Installing
-### From within Obsidian
+### From Obsidian
 1. Open settings -> Third party plugin
 2. Disable Safe mode
 3. Click Browse community plugins
