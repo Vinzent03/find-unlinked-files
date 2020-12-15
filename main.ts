@@ -8,7 +8,7 @@ interface Settings {
 	linksToIgnore: string[];
 	tagsToIgnore: string[];
 }
-export default class MyPlugin extends Plugin {
+export default class FindUnlinkedFilesPlugin extends Plugin {
 	settings: Settings;
 	async onload() {
 		console.log('loading ' + this.manifest.name + " plugin");
@@ -112,14 +112,17 @@ export default class MyPlugin extends Plugin {
 	}
 	findTagsToIgnore(file: TFile): boolean {
 		let found = false
-		let tags = this.app.metadataCache.getFileCache(file).tags
-		if (!tags)
+		let tags = this.app.metadataCache.getFileCache(file)?.tags
+		if (tags) {
+			tags.forEach(tag => {
+				if (this.settings.tagsToIgnore.contains(tag.tag.substring(1)))
+					found = true;
+			})
+			return found;
+		}
+		else {
 			return false;
-		tags.forEach(tag => {
-			if (this.settings.tagsToIgnore.contains(tag.tag.substring(1)))
-				found = true;
-		})
-		return found;
+		}
 	}
 
 
@@ -130,8 +133,8 @@ export default class MyPlugin extends Plugin {
 }
 
 class SettingsTab extends PluginSettingTab {
-	plugin: MyPlugin;
-	constructor(app: App, plugin: MyPlugin) {
+	plugin: FindUnlinkedFilesPlugin;
+	constructor(app: App, plugin: FindUnlinkedFilesPlugin) {
 		super(app, plugin);
 		this.plugin = plugin;
 	}
