@@ -8,7 +8,7 @@ In the end, it will create a file with a list of links to these unlinked files. 
 **Important:** I have not tested the performance in big vaults.
 
 ## How to use
-Call the command `Find unlinked files` and an the file `Find unlinked files plugin output.md` will be created in your vault root.
+Call the command `Find unlinked files` and the file `Find unlinked files plugin output.md` will be created in your vault root and opened in a new pane. 
 
 ## Compatibility
 Custom plugins are only available for Obsidian v0.9.7+.
