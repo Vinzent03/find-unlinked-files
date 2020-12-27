@@ -1,6 +1,7 @@
 import { App, getLinkpath, iterateCacheRefs, normalizePath, Plugin, PluginSettingTab, Setting, TFile } from 'obsidian';
 
 interface Settings {
+	outputFileName: string;
 	disableWorkingLinks: boolean;
 	directoriesToIgnore: string[];
 	filesToIgnore: string[];
@@ -14,6 +15,7 @@ export default class FindUnlinkedFilesPlugin extends Plugin {
 		console.log('loading ' + this.manifest.name + " plugin");
 		let tempData: Settings = await this.loadData();
 		this.settings = {
+			outputFileName: tempData?.outputFileName ?? "Find unlinked files plugin output",
 			disableWorkingLinks: tempData?.disableWorkingLinks ?? false,
 			directoriesToIgnore: tempData?.directoriesToIgnore ?? [],
 			filesToIgnore: tempData?.filesToIgnore ?? [],
@@ -26,7 +28,7 @@ export default class FindUnlinkedFilesPlugin extends Plugin {
 			id: 'find-unlinked-files',
 			name: 'Find unlinked files',
 			callback: async () => {
-				let outFile = this.manifest.name + " plugin output.md";
+				let outFile = this.settings.outputFileName + ".md"
 				let files = this.app.vault.getFiles();
 				let markdownFiles = this.app.vault.getMarkdownFiles();
 				let links: String[] = [];
@@ -143,6 +145,18 @@ class SettingsTab extends PluginSettingTab {
 		let { containerEl } = this;
 		containerEl.empty();
 		containerEl.createEl("h2", { text: this.plugin.manifest.name })
+
+		new Setting(containerEl)
+			.setName('Output file name')
+			.setDesc('Set name of output file (without file extension). Make sure no file exists with this name because it will be overwritten! If the name is empty, the default name is set.')
+			.addText(cb => cb.onChange(value => {
+				if (value.length == 0) {
+					this.plugin.settings.outputFileName = "Find unlinked files plugin output";
+				} else {
+					this.plugin.settings.outputFileName = value;
+				}
+				this.plugin.saveData(this.plugin.settings);
+			}).setValue(this.plugin.settings.outputFileName));
 
 		new Setting(containerEl)
 			.setName('Disable working links')

@@ -1,6 +1,6 @@
 {
   "name": "find-unlinked-files",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "description": "Find files that are not linked anywhere and would otherwise be lost",
   "main": "main.js",
   "scripts": {
