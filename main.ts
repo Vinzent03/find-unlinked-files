@@ -1,4 +1,4 @@
-import { App, getLinkpath, iterateCacheRefs, normalizePath, Plugin, PluginSettingTab, Setting, TFile } from 'obsidian';
+import { App, getAllTags, getLinkpath, iterateCacheRefs, normalizePath, Plugin, PluginSettingTab, Setting, TFile } from 'obsidian';
 
 interface Settings {
 	outputFileName: string;
@@ -114,10 +114,11 @@ export default class FindUnlinkedFilesPlugin extends Plugin {
 	}
 	findTagsToIgnore(file: TFile): boolean {
 		let found = false
-		let tags = this.app.metadataCache.getFileCache(file)?.tags
+		let tags = getAllTags(this.app.metadataCache.getFileCache(file));
+
 		if (tags) {
 			tags.forEach(tag => {
-				if (this.settings.tagsToIgnore.contains(tag.tag.substring(1)))
+				if (this.settings.tagsToIgnore.contains(tag.substring(1)))
 					found = true;
 			})
 			return found;
