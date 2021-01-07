@@ -10,14 +10,19 @@ In the end, it will create a file with a list of links to these unlinked files. 
 ## How to use
 Call the command `Find unlinked files` and the file `Find unlinked files plugin output.md` will be created in your vault root and opened in a new pane. 
 
+## Additional features:
+- add files to ignore
+- add directories to ignore
+- add tags to ignore files with one of these tags
+- add files to ignore files with links to one of these files
+- add specific file types to ignore
+- change output file name
+
 ## Compatibility
 Custom plugins are only available for Obsidian v0.9.7+.
 
-## TODO:
-- [x] add directories to ignore
-- [x] add file extensions to ignore
-
 ## Installing
+
 ### From Obsidian
 1. Open settings -> Third party plugin
 2. Disable Safe mode
