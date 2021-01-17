@@ -9,33 +9,32 @@ interface Settings {
 	linksToIgnore: string[];
 	tagsToIgnore: string[];
 }
+const DEFAULT_SETTINGS: Settings = {
+	outputFileName: "Find unlinked files plugin output",
+	disableWorkingLinks: false,
+	directoriesToIgnore: [],
+	filesToIgnore: [],
+	fileTypesToIgnore: [],
+	linksToIgnore: [],
+	tagsToIgnore: []
+};
 export default class FindUnlinkedFilesPlugin extends Plugin {
 	settings: Settings;
 	async onload() {
 		console.log('loading ' + this.manifest.name + " plugin");
-		let tempData: Settings = await this.loadData();
-		this.settings = {
-			outputFileName: tempData?.outputFileName ?? "Find unlinked files plugin output",
-			disableWorkingLinks: tempData?.disableWorkingLinks ?? false,
-			directoriesToIgnore: tempData?.directoriesToIgnore ?? [],
-			filesToIgnore: tempData?.filesToIgnore ?? [],
-			fileTypesToIgnore: tempData?.fileTypesToIgnore ?? [],
-			linksToIgnore: tempData?.linksToIgnore ?? [],
-			tagsToIgnore: tempData?.tagsToIgnore ?? [],
-		}
-
+		await this.loadSettings();
 		this.addCommand({
 			id: 'find-unlinked-files',
 			name: 'Find unlinked files',
 			callback: async () => {
-				let outFile = this.settings.outputFileName + ".md"
+				let outFile = this.settings.outputFileName + ".md";
 				let files = this.app.vault.getFiles();
 				let markdownFiles = this.app.vault.getMarkdownFiles();
 				let links: String[] = [];
 
 				markdownFiles.forEach((markFile: TFile) => {
 					if (markFile.path == outFile)
-						return
+						return;
 					iterateCacheRefs(this.app.metadataCache.getFileCache(markFile), cb => {
 						let txt = this.app.metadataCache.getFirstLinkpathDest(getLinkpath(cb.link), markFile.path);
 						if (txt != null)
@@ -64,17 +63,17 @@ export default class FindUnlinkedFilesPlugin extends Plugin {
 
 
 					if (this.settings.filesToIgnore.contains(file.path))
-						return
+						return;
 					if (links.contains(file.path))
-						return
-					notLinkedFiles.push(file)
+						return;
+					notLinkedFiles.push(file);
 				});
-				let text = ""
+				let text = "";
 				let prefix: string;
 				if (this.settings.disableWorkingLinks)
-					prefix = "	"
+					prefix = "	";
 				else
-					prefix = ""
+					prefix = "";
 				notLinkedFiles.forEach((file) => {
 					text += prefix + "- [[" + this.app.metadataCache.fileToLinktext(file, "/") + "]]\n";
 				});
@@ -86,41 +85,41 @@ export default class FindUnlinkedFilesPlugin extends Plugin {
 					if (outFile.startsWith(leaf.getDisplayText())) {
 						fileIsAlreadyOpened = true;
 					}
-				})
+				});
 				if (!fileIsAlreadyOpened)
 					this.app.workspace.openLinkText(outFile, "/", true);
 			},
 		});
-		this.addSettingTab(new SettingsTab(this.app, this))
+		this.addSettingTab(new SettingsTab(this.app, this));
 	}
 	findDirectoryToIgnore(file: TFile): boolean {
 		let found = false;
 		this.settings.directoriesToIgnore.forEach(value => {
 			if (file.path.startsWith(value) && value.length != 0)
 				found = true;
-		})
+		});
 		return found;
 	}
 	findLinksToIgnore(file: TFile): boolean {
 		let found = false;
 		iterateCacheRefs(this.app.metadataCache.getFileCache(file), cb => {
-			let link = this.app.metadataCache.getFirstLinkpathDest(cb.link, file.path)?.path
+			let link = this.app.metadataCache.getFirstLinkpathDest(cb.link, file.path)?.path;
 			if (!link)
-				return
+				return;
 			if (this.settings.linksToIgnore.contains(link))
 				found = true;
-		})
+		});
 		return found;
 	}
 	findTagsToIgnore(file: TFile): boolean {
-		let found = false
+		let found = false;
 		let tags = getAllTags(this.app.metadataCache.getFileCache(file));
 
 		if (tags) {
 			tags.forEach(tag => {
 				if (this.settings.tagsToIgnore.contains(tag.substring(1)))
 					found = true;
-			})
+			});
 			return found;
 		}
 		else {
@@ -131,6 +130,13 @@ export default class FindUnlinkedFilesPlugin extends Plugin {
 
 	onunload() {
 		console.log('unloading ' + this.manifest.name + " plugin");
+	}
+	async loadSettings() {
+		this.settings = Object.assign(DEFAULT_SETTINGS, await this.loadData());
+	}
+
+	async saveSettings() {
+		await this.saveData(this.settings);
 	}
 
 }
@@ -145,7 +151,7 @@ class SettingsTab extends PluginSettingTab {
 	display(): void {
 		let { containerEl } = this;
 		containerEl.empty();
-		containerEl.createEl("h2", { text: this.plugin.manifest.name })
+		containerEl.createEl("h2", { text: this.plugin.manifest.name });
 
 		new Setting(containerEl)
 			.setName('Output file name')
@@ -156,7 +162,7 @@ class SettingsTab extends PluginSettingTab {
 				} else {
 					this.plugin.settings.outputFileName = value;
 				}
-				this.plugin.saveData(this.plugin.settings);
+				this.plugin.saveSettings();
 			}).setValue(this.plugin.settings.outputFileName));
 
 		new Setting(containerEl)
@@ -164,7 +170,7 @@ class SettingsTab extends PluginSettingTab {
 			.setDesc('Indent lines to disable the link and to clean up the graph view')
 			.addToggle(cb => cb.onChange(value => {
 				this.plugin.settings.disableWorkingLinks = value;
-				this.plugin.saveData(this.plugin.settings);
+				this.plugin.saveSettings();
 			}
 			).setValue(this.plugin.settings.disableWorkingLinks));
 
@@ -177,7 +183,7 @@ class SettingsTab extends PluginSettingTab {
 				.onChange((value) => {
 					let paths = value.trim().split("\n").map(value => formatPath(value, true));
 					this.plugin.settings.directoriesToIgnore = paths;
-					this.plugin.saveData(this.plugin.settings);
+					this.plugin.saveSettings();
 				}));
 
 
@@ -190,7 +196,7 @@ class SettingsTab extends PluginSettingTab {
 				.onChange((value) => {
 					let paths = value.trim().split("\n").map(value => formatPath(value, false));
 					this.plugin.settings.filesToIgnore = paths;
-					this.plugin.saveData(this.plugin.settings);
+					this.plugin.saveSettings();
 				}));
 		new Setting(containerEl)
 			.setName("Links to ignore.")
@@ -201,7 +207,7 @@ class SettingsTab extends PluginSettingTab {
 				.onChange((value) => {
 					let paths = value.trim().split("\n").map(value => formatPath(value, false));
 					this.plugin.settings.linksToIgnore = paths;
-					this.plugin.saveData(this.plugin.settings);
+					this.plugin.saveSettings();
 				}));
 		new Setting(containerEl)
 			.setName("Filetypes to ignore.")
@@ -212,7 +218,7 @@ class SettingsTab extends PluginSettingTab {
 				.onChange((value) => {
 					let extensions = value.trim().split(",");
 					this.plugin.settings.fileTypesToIgnore = extensions;
-					this.plugin.saveData(this.plugin.settings);
+					this.plugin.saveSettings();
 				}));
 		new Setting(containerEl)
 			.setName("Tags to ignore.")
@@ -223,7 +229,7 @@ class SettingsTab extends PluginSettingTab {
 				.onChange((value) => {
 					let tags = value.trim().split(",");
 					this.plugin.settings.tagsToIgnore = tags;
-					this.plugin.saveData(this.plugin.settings);
+					this.plugin.saveSettings();
 				}));
 
 		function formatPath(path: string, addDirectorySlash: boolean): string {
@@ -231,9 +237,9 @@ class SettingsTab extends PluginSettingTab {
 				return path;
 			path = normalizePath(path);
 			if (addDirectorySlash)
-				return path + "/"
+				return path + "/";
 			else
-				return path
+				return path;
 		}
 	}
 }
