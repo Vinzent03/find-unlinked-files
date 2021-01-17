@@ -1,4 +1,4 @@
-import { App, getAllTags, getLinkpath, iterateCacheRefs, normalizePath, Plugin, PluginSettingTab, Setting, TFile } from 'obsidian';
+import { App, getAllTags, getLinkpath, iterateCacheRefs, Modal, normalizePath, Plugin, PluginSettingTab, Setting, TFile } from 'obsidian';
 
 interface Settings {
 	outputFileName: string;
@@ -8,6 +8,7 @@ interface Settings {
 	fileTypesToIgnore: string[];
 	linksToIgnore: string[];
 	tagsToIgnore: string[];
+	fileTypesToDelete: string[];
 }
 const DEFAULT_SETTINGS: Settings = {
 	outputFileName: "Find unlinked files plugin output",
@@ -16,7 +17,8 @@ const DEFAULT_SETTINGS: Settings = {
 	filesToIgnore: [],
 	fileTypesToIgnore: [],
 	linksToIgnore: [],
-	tagsToIgnore: []
+	tagsToIgnore: [],
+	fileTypesToDelete: [],
 };
 export default class FindUnlinkedFilesPlugin extends Plugin {
 	settings: Settings;
@@ -90,8 +92,27 @@ export default class FindUnlinkedFilesPlugin extends Plugin {
 					this.app.workspace.openLinkText(outFile, "/", true);
 			},
 		});
+		this.addCommand({
+			id: "delete-unlinked-files",
+			name: "Delete unlinked files with certain extension. See README",
+			callback: () => {
+				const links = this.app.metadataCache.getCache(this.settings.outputFileName + ".md")?.links ?? [];
+				const filesToDelete: TFile[] = [];
+				links.forEach((link) => {
+					const file = this.app.metadataCache.getFirstLinkpathDest(link.link, "/");
+					if (!file)
+						return;
+					if (this.settings.fileTypesToDelete.contains(file.extension)) {
+						filesToDelete.push(file);
+					}
+				});
+				if (filesToDelete.length > 0)
+					new DeleteFilesModal(this.app, filesToDelete).open();
+			}
+		});
 		this.addSettingTab(new SettingsTab(this.app, this));
 	}
+
 	findDirectoryToIgnore(file: TFile): boolean {
 		let found = false;
 		this.settings.directoriesToIgnore.forEach(value => {
@@ -139,6 +160,42 @@ export default class FindUnlinkedFilesPlugin extends Plugin {
 		await this.saveData(this.settings);
 	}
 
+}
+class DeleteFilesModal extends Modal {
+	filesToDelete: TFile[];
+	constructor(app: App, filesToDelete: TFile[]) {
+		super(app);
+		this.filesToDelete = filesToDelete;
+	}
+
+	onOpen() {
+		let { contentEl, titleEl } = this;
+		titleEl.setText('Move ' + this.filesToDelete.length + ' files to system trash?');
+		contentEl
+			.createEl("button", { text: "Cancel" })
+			.addEventListener("click", () => this.close());
+		contentEl
+			.setAttr("margin", "auto");
+
+		contentEl
+			.createEl("button",
+				{
+					cls: "mod-cta",
+					text: "Confirm"
+				})
+			.addEventListener("click", async () => {
+				for (const file of this.filesToDelete) {
+					await this.app.vault.trash(file, true);
+				}
+				this.close();
+			});
+
+	}
+
+	onClose() {
+		let { contentEl } = this;
+		contentEl.empty();
+	}
 }
 
 class SettingsTab extends PluginSettingTab {
@@ -231,7 +288,17 @@ class SettingsTab extends PluginSettingTab {
 					this.plugin.settings.tagsToIgnore = tags;
 					this.plugin.saveSettings();
 				}));
-
+		new Setting(containerEl)
+			.setName("Filetypes to delete per command. See README.")
+			.setDesc("Add each filetype separated by comma. ")
+			.addTextArea(cb => cb
+				.setPlaceholder("jpg,png")
+				.setValue(this.plugin.settings.fileTypesToDelete.join(","))
+				.onChange((value) => {
+					let extensions = value.trim().split(",");
+					this.plugin.settings.fileTypesToDelete = extensions;
+					this.plugin.saveSettings();
+				}));
 		function formatPath(path: string, addDirectorySlash: boolean): string {
 			if (path.length == 0)
 				return path;

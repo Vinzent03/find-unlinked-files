@@ -18,6 +18,9 @@ Call the command `Find unlinked files` and the file `Find unlinked files plugin 
 - add specific file types to ignore
 - change output file name
 
+## Move files with certain extension in output file to system trash (extra command)
+Cycles through every link in the output file. If the extension of the link is in the list (can be set in settings), it moves the file to system trash. Is useful to delete many unused media files.
+
 ## Compatibility
 Custom plugins are only available for Obsidian v0.9.7+.
 
