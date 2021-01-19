@@ -1,11 +1,11 @@
 # Find unlinked files (files with no backlinks)
-
-## Info
+A Plugin for [Obsidian](https://obsidian.md)
+## How does it work?
 This plugin goes through your whole vault and searches for files, which are linked nowhere. In other words: Files with no backlinks.
 
 In the end, it will create a file with a list of links to these unlinked files. Now you can either delete these unused files or link them somewhere in your vault.
 
-**Important:** I have not tested the performance in big vaults.
+**Important:** I have not tested the performance in big vaults. Feel free to tell your experience.
 
 ## How to use
 Call the command `Find unlinked files` and the file `Find unlinked files plugin output.md` will be created in your vault root and opened in a new pane. 
@@ -19,7 +19,7 @@ Call the command `Find unlinked files` and the file `Find unlinked files plugin 
 - change output file name
 
 ## Move files with certain extension in output file to system trash (extra command)
-Cycles through every link in the output file. If the extension of the link is in the list (can be set in settings), it moves the file to system trash. Is useful to delete many unused media files.
+Goes through every link in the output file. If the extension of the link is in the list (can be set in settings), it moves the file to system trash. Is useful to delete many unused media files.
 
 ## Compatibility
 Custom plugins are only available for Obsidian v0.9.7+.
