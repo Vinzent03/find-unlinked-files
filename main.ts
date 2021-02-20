@@ -29,47 +29,26 @@ export default class FindUnlinkedFilesPlugin extends Plugin {
 			id: 'find-unlinked-files',
 			name: 'Find unlinked files',
 			callback: async () => {
-				let outFile = this.settings.outputFileName + ".md";
-				let files = this.app.vault.getFiles();
-				let markdownFiles = this.app.vault.getMarkdownFiles();
-				let links: String[] = [];
+				const outFileName = this.settings.outputFileName + ".md";
+				let outFile: TFile;
+				const files = this.app.vault.getFiles();
+				const markdownFiles = this.app.vault.getMarkdownFiles();
+				let links: string[] = [];
 
 				markdownFiles.forEach((markFile: TFile) => {
-					if (markFile.path == outFile)
+					if (markFile.path == outFileName) {
+						outFile = markFile;
 						return;
-					iterateCacheRefs(this.app.metadataCache.getFileCache(markFile), cb => {
+					} iterateCacheRefs(this.app.metadataCache.getFileCache(markFile), cb => {
 						let txt = this.app.metadataCache.getFirstLinkpathDest(getLinkpath(cb.link), markFile.path);
 						if (txt != null)
 							links.push(txt.path);
 					});
 				});
-
-				let notLinkedFiles: TFile[] = [];
-
-				files.forEach((file: TFile) => {
-					if (file.path == outFile)
-						return;
-
-					//filetypes to ignore by default
-					if (["css"].contains(file.extension))
-						return;
-					if (this.settings.fileTypesToIgnore.contains(file.extension))
-						return;
-
-					if (this.findLinksToIgnore(file))
-						return;
-					if (this.findTagsToIgnore(file))
-						return;
-					if (this.findDirectoryToIgnore(file))
-						return;
+				const notLinkedFiles = files.filter((file) => this.isValid(file, links));
+				notLinkedFiles.remove(outFile);
 
 
-					if (this.settings.filesToIgnore.contains(file.path))
-						return;
-					if (links.contains(file.path))
-						return;
-					notLinkedFiles.push(file);
-				});
 				let text = "";
 				let prefix: string;
 				if (this.settings.disableWorkingLinks)
@@ -79,17 +58,17 @@ export default class FindUnlinkedFilesPlugin extends Plugin {
 				notLinkedFiles.forEach((file) => {
 					text += prefix + "- [[" + this.app.metadataCache.fileToLinktext(file, "/") + "]]\n";
 				});
-				await this.app.vault.adapter.write(outFile, text);
+				await this.app.vault.adapter.write(outFileName, text);
 
 				let fileIsAlreadyOpened = false;
 
 				this.app.workspace.iterateAllLeaves(leaf => {
-					if (outFile.startsWith(leaf.getDisplayText())) {
+					if (outFileName.startsWith(leaf.getDisplayText())) {
 						fileIsAlreadyOpened = true;
 					}
 				});
 				if (!fileIsAlreadyOpened)
-					this.app.workspace.openLinkText(outFile, "/", true);
+					this.app.workspace.openLinkText(outFileName, "/", true);
 			},
 		});
 		this.addCommand({
@@ -112,40 +91,50 @@ export default class FindUnlinkedFilesPlugin extends Plugin {
 		});
 		this.addSettingTab(new SettingsTab(this.app, this));
 	}
-
-	findDirectoryToIgnore(file: TFile): boolean {
-		let found = false;
-		this.settings.directoriesToIgnore.forEach(value => {
-			if (file.path.startsWith(value) && value.length != 0)
-				found = true;
-		});
-		return found;
-	}
-	findLinksToIgnore(file: TFile): boolean {
-		let found = false;
-		iterateCacheRefs(this.app.metadataCache.getFileCache(file), cb => {
-			let link = this.app.metadataCache.getFirstLinkpathDest(cb.link, file.path)?.path;
-			if (!link)
-				return;
-			if (this.settings.linksToIgnore.contains(link))
-				found = true;
-		});
-		return found;
-	}
-	findTagsToIgnore(file: TFile): boolean {
-		let found = false;
-		let tags = getAllTags(this.app.metadataCache.getFileCache(file));
-
-		if (tags) {
-			tags.forEach(tag => {
-				if (this.settings.tagsToIgnore.contains(tag.substring(1)))
-					found = true;
-			});
-			return found;
-		}
-		else {
+	isValid(file: TFile, links: string[]): boolean {
+		if (links.contains(file.path))
 			return false;
+
+		//filetypes to ignore by default
+		if (file.extension == "css")
+			return false;
+
+		if (this.settings.fileTypesToIgnore.contains(file.extension))
+			return false;
+
+		if (this.hasLinksToIgnore(file))
+			return false;
+
+		if (this.hasTagsToIgnore(file))
+			return false;
+
+		if (this.isDirectoryToIgnore(file))
+			return false;
+
+		if (this.settings.filesToIgnore.contains(file.path))
+			return false;
+
+		return true;
+	}
+
+	isDirectoryToIgnore(file: TFile): boolean {
+		return this.settings.directoriesToIgnore.find((value) => file.path.startsWith(value) && value.length != 0) !== undefined;
+	}
+	hasLinksToIgnore(file: TFile): boolean {
+		const cache = this.app.metadataCache.getFileCache(file);
+		if ((cache?.embeds != null || cache?.links != null) && this.settings.linksToIgnore[0] == "*") {
+			return true;
 		}
+
+		return iterateCacheRefs(cache, cb => {
+			const link = this.app.metadataCache.getFirstLinkpathDest(cb.link, file.path)?.path;
+			return this.settings.linksToIgnore.contains(link);
+
+		});
+	}
+	hasTagsToIgnore(file: TFile): boolean {
+		const tags = getAllTags(this.app.metadataCache.getFileCache(file));
+		return tags?.find((tag) => this.settings.tagsToIgnore.contains(tag.substring(1))) !== undefined;
 	}
 
 
@@ -159,7 +148,6 @@ export default class FindUnlinkedFilesPlugin extends Plugin {
 	async saveSettings() {
 		await this.saveData(this.settings);
 	}
-
 }
 class DeleteFilesModal extends Modal {
 	filesToDelete: TFile[];
@@ -257,7 +245,7 @@ class SettingsTab extends PluginSettingTab {
 				}));
 		new Setting(containerEl)
 			.setName("Links to ignore.")
-			.setDesc("Ignores files, which contain the given file as link. Add each file path in a new line (with file extension!)")
+			.setDesc("Ignores files, which contain the given file as link. Add each file path in a new line (with file extension!). Set it to `*` to ignore files with links.")
 			.addTextArea(cb => cb
 				.setPlaceholder("Directory/file.md")
 				.setValue(this.plugin.settings.linksToIgnore.join("\n"))
