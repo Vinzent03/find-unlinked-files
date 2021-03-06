@@ -1,6 +1,8 @@
-# Find unlinked files (files with no backlinks)
+# Find unlinked files (files with no backlinks) and unresolved links
 A Plugin for [Obsidian](https://obsidian.md)
+
 ## How does it work?
+
 ### Find unlinked files
 
 This plugin goes through your whole vault and searches for files, which are linked nowhere. In other words: Files with no backlinks.
