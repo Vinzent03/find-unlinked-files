@@ -60,7 +60,7 @@ export class Utils {
 
         let fileIsAlreadyOpened = false;
         app.workspace.iterateAllLeaves(leaf => {
-            if (outputFileName.startsWith(leaf.getDisplayText())) {
+            if (leaf.getDisplayText() != "" && outputFileName.startsWith(leaf.getDisplayText())) {
                 fileIsAlreadyOpened = true;
             }
         });
