@@ -78,8 +78,17 @@ export class SettingsTab extends PluginSettingTab {
                     this.plugin.saveSettings();
                 }));
         new Setting(containerEl)
-            .setName("File types to ignore.")
-            .setDesc("Add each file type separated by comma")
+            .setName("Ignore or include files with the given filetypes")
+            .setDesc("Enable to ignore files with the given filetypes. Disable to only include files with the given filetypes")
+            .addToggle(cb =>
+                cb.setValue(this.plugin.settings.ignoreFileTypes)
+                    .onChange(value => {
+                        this.plugin.settings.ignoreFileTypes = value;
+                        this.plugin.saveSettings();
+                    }));
+        new Setting(containerEl)
+            .setName("File types")
+            .setDesc("Effect depends on toggle above")
             .addTextArea(cb => cb
                 .setPlaceholder("docx,txt")
                 .setValue(this.plugin.settings.fileTypesToIgnore.join(","))

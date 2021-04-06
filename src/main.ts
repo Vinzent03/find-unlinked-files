@@ -12,6 +12,7 @@ export interface Settings {
 	linksToIgnore: string[];
 	tagsToIgnore: string[];
 	fileTypesToDelete: string[];
+	ignoreFileTypes: boolean;
 	unresolvedLinksDirectoriesToIgnore: string[];
 	unresolvedLinksFilesToIgnore: string[];
 	unresolvedLinksFileTypesToIgnore: string[];
@@ -28,6 +29,7 @@ const DEFAULT_SETTINGS: Settings = {
 	linksToIgnore: [],
 	tagsToIgnore: [],
 	fileTypesToDelete: [],
+	ignoreFileTypes: true,
 	unresolvedLinksOutputFileName: "unresolved links output",
 	unresolvedLinksDirectoriesToIgnore: [],
 	unresolvedLinksFilesToIgnore: [],
@@ -173,9 +175,14 @@ export default class FindUnlinkedFilesPlugin extends Plugin {
 		if (file.extension == "css")
 			return false;
 
-		if (this.settings.fileTypesToIgnore.contains(file.extension))
-			return false;
-
+		if (this.settings.fileTypesToIgnore[0] !== "") {
+			const containsFileType = this.settings.fileTypesToIgnore.contains(file.extension);
+			if (this.settings.ignoreFileTypes) {
+				if (containsFileType) return;
+			} else {
+				if (!containsFileType) return;
+			}
+		}
 
 		const utils = new Utils(
 			this.app,
