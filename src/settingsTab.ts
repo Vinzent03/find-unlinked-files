@@ -45,7 +45,17 @@ export class SettingsTab extends PluginSettingTab {
             ).setValue(this.plugin.settings.disableWorkingLinks));
 
         new Setting(containerEl)
-            .setName("Directories to ignore.")
+            .setName("Ignore or include files in the given directories")
+            .setDesc("Enable to ignore files in the given directories. Disable to only include files in the given filetypes")
+            .addToggle(cb =>
+                cb.setValue(this.plugin.settings.ignoreDirectories)
+                    .onChange(value => {
+                        this.plugin.settings.ignoreDirectories = value;
+                        this.plugin.saveSettings();
+                    }));
+
+        new Setting(containerEl)
+            .setName("Directories")
             .setDesc("Add each directory path in a new line")
             .addTextArea(cb => cb
                 .setPlaceholder("Directory/Subdirectory")

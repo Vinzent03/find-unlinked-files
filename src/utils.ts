@@ -11,6 +11,7 @@ export class Utils {
      * @param linksToIgnore 
      * @param directoriesToIgnore 
      * @param filesToIgnore 
+     * @param ignoreDirectories
      */
     constructor(
         private app: App,
@@ -18,7 +19,8 @@ export class Utils {
         private tagsToIgnore: string[],
         private linksToIgnore: string[],
         private directoriesToIgnore: string[],
-        private filesToIgnore: string[]
+        private filesToIgnore: string[],
+        private ignoreDirectories: boolean = true,
     ) {
         this.fileCache = app.metadataCache.getCache(filePath);
     }
@@ -38,15 +40,21 @@ export class Utils {
         });
     }
 
-    private isDirectoryToIgnore(): boolean {
-        return this.directoriesToIgnore.find((value) => this.filePath.startsWith(value) && value.length != 0) !== undefined;
+    private checkDirectory(): boolean {
+        const contains = this.directoriesToIgnore.find((value) => this.filePath.startsWith(value) && value.length != 0) !== undefined;
+        if (this.ignoreDirectories) {
+            return contains;
+        } else {
+            return !contains;
+        }
     }
+
     private isFileToIgnore() {
         return this.filesToIgnore.contains(this.filePath);
     }
 
     public isValid() {
-        return !this.hasTagsToIgnore() && !this.hasLinksToIgnore() && !this.isDirectoryToIgnore() && !this.isFileToIgnore();
+        return !this.hasTagsToIgnore() && !this.hasLinksToIgnore() && !this.checkDirectory() && !this.isFileToIgnore();
     }
 
     /**
