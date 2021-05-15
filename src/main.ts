@@ -1,4 +1,4 @@
-import { getLinkpath, iterateCacheRefs, Plugin, TFile } from 'obsidian';
+import { getLinkpath, iterateCacheRefs, Notice, Plugin, TFile } from 'obsidian';
 import { DeleteFilesModal } from './deleteFilesModal';
 import { SettingsTab } from './settingsTab';
 import { Utils } from './utils';
@@ -98,7 +98,11 @@ export default class FindUnlinkedFilesPlugin extends Plugin {
 		Utils.writeAndOpenFile(this.app, outFileName, text);
 
 	}
-	deleteUnlinkedFiles() {
+	async deleteUnlinkedFiles() {
+		if (!await this.app.vault.adapter.exists(this.settings.outputFileName + ".md")) {
+			new Notice("Can't find file - Please run the `Find unlinked files' command before");
+			return;
+		}
 		const links = this.app.metadataCache.getCache(this.settings.outputFileName + ".md")?.links ?? [];
 		const filesToDelete: TFile[] = [];
 		links.forEach((link) => {
