@@ -20,6 +20,9 @@ export interface Settings {
 	unresolvedLinksLinksToIgnore: string[];
 	unresolvedLinksTagsToIgnore: string[];
 	unresolvedLinksOutputFileName: string;
+	withoutTagsDirectoriesToIgnore: string[];
+	withoutTagsFilesToIgnore: string[];
+	withoutTagsOutputFileName: string;
 }
 const DEFAULT_SETTINGS: Settings = {
 	outputFileName: "unlinked files output",
@@ -38,6 +41,9 @@ const DEFAULT_SETTINGS: Settings = {
 	unresolvedLinksFileTypesToIgnore: [],
 	unresolvedLinksLinksToIgnore: [],
 	unresolvedLinksTagsToIgnore: [],
+	withoutTagsDirectoriesToIgnore: [],
+	withoutTagsFilesToIgnore: [],
+	withoutTagsOutputFileName: "files without tags"
 };
 interface UnresolvedLink {
 	link: string;
@@ -62,6 +68,11 @@ export default class FindUnlinkedFilesPlugin extends Plugin {
 			id: "delete-unlinked-files",
 			name: "Delete unlinked files with certain extension. See README",
 			callback: () => this.deleteUnlinkedFiles()
+		});
+		this.addCommand({
+			id: "find-files-without-tags",
+			name: "Find files without tags",
+			callback: () => this.findFilesWithoutTags()
 		});
 		this.addSettingTab(new SettingsTab(this.app, this, DEFAULT_SETTINGS));
 	}
@@ -165,6 +176,29 @@ export default class FindUnlinkedFilesPlugin extends Plugin {
 				...links.map((e) => `- [[${e.link}]] in [[${e.files.join("]], [[")}]]`)
 			].join("\n"));
 
+	}
+
+	findFilesWithoutTags() {
+		const outFileName = this.settings.withoutTagsOutputFileName + ".md";
+		let outFile: TFile;
+		const files = this.app.vault.getMarkdownFiles();
+		let withoutFiles = files.filter((file) => {
+			if (new Utils(this.app, file.path, [], [], this.settings.withoutTagsDirectoriesToIgnore, this.settings.withoutTagsFilesToIgnore, true).isValid()) {
+				return (this.app.metadataCache.getFileCache(file).tags?.length ?? 0) <= 0;
+			} else {
+				return false;
+			}
+		});
+		withoutFiles.remove(outFile);
+
+
+		let prefix: string;
+		if (this.settings.disableWorkingLinks)
+			prefix = "	";
+		else
+			prefix = "";
+		const text = withoutFiles.map((file) => `${prefix}- [[${file.path}]]`).join("\n");
+		Utils.writeAndOpenFile(this.app, outFileName, text);
 	}
 
 	/**

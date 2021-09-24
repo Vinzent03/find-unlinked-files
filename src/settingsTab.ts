@@ -201,5 +201,43 @@ export class SettingsTab extends PluginSettingTab {
                     this.plugin.settings.unresolvedLinksTagsToIgnore = tags;
                     this.plugin.saveSettings();
                 }));
+
+        containerEl.createEl("h4", { text: "Settings for find files without tags" });
+
+        new Setting(containerEl)
+            .setName('Output file name')
+            .setDesc('Set name of output file (without file extension). Make sure no file exists with this name because it will be overwritten! If the name is empty, the default name is set.')
+            .addText(cb => cb.onChange(value => {
+                if (value.length == 0) {
+                    this.plugin.settings.withoutTagsOutputFileName = this.defaultSettings.withoutTagsOutputFileName;
+                } else {
+                    this.plugin.settings.withoutTagsOutputFileName = value;
+                }
+                this.plugin.saveSettings();
+            }).setValue(this.plugin.settings.withoutTagsOutputFileName));
+
+        new Setting(containerEl)
+            .setName("Files to ignore.")
+            .setDesc("Ignore the specific files. Add each file path in a new line (with file extension!)")
+            .addTextArea(cb => cb
+                .setPlaceholder("Directory/file.md")
+                .setValue(this.plugin.settings.withoutTagsFilesToIgnore.join("\n"))
+                .onChange((value) => {
+                    let paths = value.trim().split("\n").map(value => this.formatPath(value, false));
+                    this.plugin.settings.withoutTagsFilesToIgnore = paths;
+                    this.plugin.saveSettings();
+                }));
+
+        new Setting(containerEl)
+            .setName("Directories to ignore.")
+            .setDesc("Ignore files in the specified directories. Add each directory path in a new line")
+            .addTextArea(cb => cb
+                .setPlaceholder("Directory/Subdirectory")
+                .setValue(this.plugin.settings.withoutTagsDirectoriesToIgnore.join("\n"))
+                .onChange((value) => {
+                    let paths = value.trim().split("\n").map(value => this.formatPath(value, true));
+                    this.plugin.settings.withoutTagsDirectoriesToIgnore = paths;
+                    this.plugin.saveSettings();
+                }));
     }
 }
