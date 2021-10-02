@@ -1,4 +1,4 @@
-import { getLinkpath, iterateCacheRefs, Notice, Plugin, TFile } from 'obsidian';
+import { getAllTags, getLinkpath, iterateCacheRefs, Notice, Plugin, TFile } from 'obsidian';
 import { DeleteFilesModal } from './deleteFilesModal';
 import { SettingsTab } from './settingsTab';
 import { Utils } from './utils';
@@ -184,7 +184,8 @@ export default class FindUnlinkedFilesPlugin extends Plugin {
 		const files = this.app.vault.getMarkdownFiles();
 		let withoutFiles = files.filter((file) => {
 			if (new Utils(this.app, file.path, [], [], this.settings.withoutTagsDirectoriesToIgnore, this.settings.withoutTagsFilesToIgnore, true).isValid()) {
-				return (this.app.metadataCache.getFileCache(file).tags?.length ?? 0) <= 0;
+				return (getAllTags(this.app.metadataCache.getFileCache(file)).length ?? 0) <= 0;
+
 			} else {
 				return false;
 			}
