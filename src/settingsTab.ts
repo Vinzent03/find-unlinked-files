@@ -46,7 +46,7 @@ export class SettingsTab extends PluginSettingTab {
 
         new Setting(containerEl)
             .setName("Ignore or include files in the given directories")
-            .setDesc("Enable to ignore files in the given directories. Disable to only include files in the given filetypes")
+            .setDesc("Enable to ignore files in the given directories. Disable to only include files in the given directories")
             .addToggle(cb =>
                 cb.setValue(this.plugin.settings.ignoreDirectories)
                     .onChange(value => {
