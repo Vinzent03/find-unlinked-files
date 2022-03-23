@@ -51,9 +51,6 @@ Custom plugins are only available for Obsidian v0.9.7+.
 4. Go to settings and disable safe mode
 5. Enable `Find unlinked files`
 
+If you find this plugin useful and would like to support its development, you can support me on [Ko-fi](https://Ko-fi.com/Vinzent).
 
-> If you want to support me you can consider [buying me a coffee](https://www.buymeacoffee.com/Vinzent03).
-
-<br>
-
-<a href="https://www.buymeacoffee.com/Vinzent03"><img src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=&slug=Vinzent03&button_colour=5F7FFF&font_colour=ffffff&font_family=Inter&outline_colour=000000&coffee_colour=FFDD00"></a>
+[![Ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/F1F195IQ5)
