@@ -120,7 +120,7 @@ export class SettingsTab extends PluginSettingTab {
                 }));
         new Setting(containerEl)
             .setName("Filetypes to delete per command. See README.")
-            .setDesc("Add each filetype separated by comma. ")
+            .setDesc("Add each filetype separated by comma. Set to `*` to delete all files.")
             .addTextArea(cb => cb
                 .setPlaceholder("jpg,png")
                 .setValue(this.plugin.settings.fileTypesToDelete.join(","))

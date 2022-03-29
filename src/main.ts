@@ -87,7 +87,8 @@ export default class FindUnlinkedFilesPlugin extends Plugin {
 			if (markFile.path == outFileName) {
 				outFile = markFile;
 				return;
-			} iterateCacheRefs(this.app.metadataCache.getFileCache(markFile), cb => {
+			}
+			iterateCacheRefs(this.app.metadataCache.getFileCache(markFile), cb => {
 				let txt = this.app.metadataCache.getFirstLinkpathDest(getLinkpath(cb.link), markFile.path);
 				if (txt != null)
 					links.push(txt.path);
@@ -116,11 +117,13 @@ export default class FindUnlinkedFilesPlugin extends Plugin {
 		}
 		const links = this.app.metadataCache.getCache(this.settings.outputFileName + ".md")?.links ?? [];
 		const filesToDelete: TFile[] = [];
+		console.log(this.settings.fileTypesToDelete);
 		links.forEach((link) => {
 			const file = this.app.metadataCache.getFirstLinkpathDest(link.link, "/");
 			if (!file)
 				return;
-			if (this.settings.fileTypesToDelete.contains(file.extension)) {
+
+			if (this.settings.fileTypesToDelete[0] == "*" || this.settings.fileTypesToDelete.contains(file.extension)) {
 				filesToDelete.push(file);
 			}
 		});
