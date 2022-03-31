@@ -21,6 +21,7 @@ export class Utils {
         private directoriesToIgnore: string[],
         private filesToIgnore: string[],
         private ignoreDirectories: boolean = true,
+        private dir?: string,
     ) {
         this.fileCache = app.metadataCache.getCache(filePath);
     }
@@ -41,7 +42,15 @@ export class Utils {
     }
 
     private checkDirectory(): boolean {
-        const contains = this.directoriesToIgnore.find((value) => this.filePath.startsWith(value) && value.length != 0) !== undefined;
+        if (this.dir) {
+            if (!this.filePath.startsWith(this.dir)) {
+                return true;
+            } else if (!this.directoriesToIgnore.some(ignore => ignore.startsWith(this.dir))) {
+                return false;
+            }
+        }
+
+        const contains = this.directoriesToIgnore.find((value) => value.length != 0 && this.filePath.startsWith(value)) !== undefined;
         if (this.ignoreDirectories) {
             return contains;
         } else {

@@ -1,4 +1,4 @@
-import { getAllTags, getLinkpath, iterateCacheRefs, Notice, Plugin, TFile } from 'obsidian';
+import { getAllTags, getLinkpath, iterateCacheRefs, Notice, Plugin, TFile, TFolder } from 'obsidian';
 import { DeleteFilesModal } from './deleteFilesModal';
 import { SettingsTab } from './settingsTab';
 import { Utils } from './utils';
@@ -75,8 +75,19 @@ export default class FindUnlinkedFilesPlugin extends Plugin {
 			callback: () => this.findFilesWithoutTags()
 		});
 		this.addSettingTab(new SettingsTab(this.app, this, DEFAULT_SETTINGS));
+
+		this.app.workspace.on("file-menu", (menu, file, source, leaf) => {
+			if (file instanceof TFolder) {
+				menu.addItem(cb => {
+					cb.setIcon("search");
+					cb.setTitle("Find unlinked files");
+					cb.onClick((e) => { this.findUnlinkedFiles(file.path); });
+				});
+			}
+		});
 	}
-	findUnlinkedFiles() {
+
+	findUnlinkedFiles(dir?: string) {
 		const outFileName = this.settings.outputFileName + ".md";
 		let outFile: TFile;
 		const files = this.app.vault.getFiles();
@@ -94,7 +105,7 @@ export default class FindUnlinkedFilesPlugin extends Plugin {
 					links.push(txt.path);
 			});
 		});
-		const notLinkedFiles = files.filter((file) => this.isValid(file, links));
+		const notLinkedFiles = files.filter((file) => this.isValid(file, links, dir));
 		notLinkedFiles.remove(outFile);
 
 
@@ -211,7 +222,7 @@ export default class FindUnlinkedFilesPlugin extends Plugin {
 	 * @param file file to check
 	 * @param links all links in the vault
 	 */
-	isValid(file: TFile, links: string[]): boolean {
+	isValid(file: TFile, links: string[], dir: string): boolean {
 		if (links.contains(file.path))
 			return false;
 
@@ -235,7 +246,8 @@ export default class FindUnlinkedFilesPlugin extends Plugin {
 			this.settings.linksToIgnore,
 			this.settings.directoriesToIgnore,
 			this.settings.filesToIgnore,
-			this.settings.ignoreDirectories
+			this.settings.ignoreDirectories,
+			dir
 		);
 		if (!utils.isValid())
 			return false;
