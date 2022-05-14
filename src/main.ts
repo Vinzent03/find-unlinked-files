@@ -116,7 +116,7 @@ export default class FindUnlinkedFilesPlugin extends Plugin {
 		else
 			prefix = "";
 		notLinkedFiles.forEach((file) => {
-			text += prefix + "- [[" + this.app.metadataCache.fileToLinktext(file, "/") + "]]\n";
+			text += prefix + "- [[" + this.app.metadataCache.fileToLinktext(file, "/", false) + "]]\n";
 		});
 		Utils.writeAndOpenFile(this.app, outFileName, text);
 
