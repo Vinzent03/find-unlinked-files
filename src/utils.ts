@@ -45,8 +45,6 @@ export class Utils {
         if (this.dir) {
             if (!this.filePath.startsWith(this.dir)) {
                 return true;
-            } else if (!this.directoriesToIgnore.some(ignore => ignore.startsWith(this.dir))) {
-                return false;
             }
         }
 

@@ -81,7 +81,8 @@ export default class FindUnlinkedFilesPlugin extends Plugin {
 				menu.addItem(cb => {
 					cb.setIcon("search");
 					cb.setTitle("Find unlinked files");
-					cb.onClick((e) => { this.findUnlinkedFiles(file.path); });
+					// Add trailing slash to catch files named like the directory. See https://github.com/Vinzent03/find-unlinked-files/issues/24
+					cb.onClick((e) => { this.findUnlinkedFiles(file.path + "/"); });
 				});
 			}
 		});

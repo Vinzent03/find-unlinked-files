@@ -7,6 +7,8 @@ export class SettingsTab extends PluginSettingTab {
         super(app, plugin);
         this.plugin = plugin;
     }
+
+    // Add trailing slash to catch files named like the directory. See https://github.com/Vinzent03/find-unlinked-files/issues/24
     formatPath(path: string, addDirectorySlash: boolean): string {
         if (path.length == 0)
             return path;
