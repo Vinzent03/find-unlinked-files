@@ -79,7 +79,27 @@ export class Utils {
                 fileIsAlreadyOpened = true;
             }
         });
-        if (!fileIsAlreadyOpened)
-            app.workspace.openLinkText(outputFileName, "/", true);
+
+        const newPane = (() => {
+          if (app.workspace.getLeavesOfType("empty").length > 0) {
+            return false;
+          } else {
+            return true;
+          }
+        })();
+
+        if (!fileIsAlreadyOpened) {
+            if (newPane) {
+                app.workspace.openLinkText(outputFileName, "/", true);
+            } else {
+                const file = app.vault.getAbstractFileByPath(outputFileName);
+
+                if (file && file instanceof TFile) {
+                    await app.workspace.getLeavesOfType("empty")[0].openFile(file);
+                } else {
+                    app.workspace.openLinkText(outputFileName, "/", true);
+                }
+            }
+        }
     }
 }
