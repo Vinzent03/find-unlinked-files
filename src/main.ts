@@ -23,6 +23,7 @@ export interface Settings {
 	withoutTagsDirectoriesToIgnore: string[];
 	withoutTagsFilesToIgnore: string[];
 	withoutTagsOutputFileName: string;
+	openOutputFile: boolean;
 }
 const DEFAULT_SETTINGS: Settings = {
 	outputFileName: "orphaned files output",
@@ -43,8 +44,10 @@ const DEFAULT_SETTINGS: Settings = {
 	unresolvedLinksTagsToIgnore: [],
 	withoutTagsDirectoriesToIgnore: [],
 	withoutTagsFilesToIgnore: [],
-	withoutTagsOutputFileName: "files without tags"
+	withoutTagsOutputFileName: "files without tags",
+	openOutputFile: true,
 };
+
 interface BrokenLink {
 	link: string;
 	files: string[];
@@ -119,7 +122,7 @@ export default class FindOrphanedFilesPlugin extends Plugin {
 		notLinkedFiles.forEach((file) => {
 			text += prefix + "- [[" + this.app.metadataCache.fileToLinktext(file, "/", false) + "]]\n";
 		});
-		Utils.writeAndOpenFile(this.app, outFileName, text);
+		Utils.writeAndOpenFile(this.app, outFileName, text, this.settings.openOutputFile);
 
 	}
 	async deleteOrphanedFiles() {
@@ -189,7 +192,8 @@ export default class FindOrphanedFilesPlugin extends Plugin {
 			[
 				"Don't forget that creating the file from here may create the file in the wrong directory!",
 				...links.map((e) => `- [[${e.link}]] in [[${e.files.join("]], [[")}]]`)
-			].join("\n"));
+			].join("\n"),
+			this.settings.openOutputFile);
 
 	}
 
@@ -214,7 +218,7 @@ export default class FindOrphanedFilesPlugin extends Plugin {
 		else
 			prefix = "";
 		const text = withoutFiles.map((file) => `${prefix}- [[${file.path}]]`).join("\n");
-		Utils.writeAndOpenFile(this.app, outFileName, text);
+		Utils.writeAndOpenFile(this.app, outFileName, text, this.settings.openOutputFile);
 	}
 
 	/**
