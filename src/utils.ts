@@ -4,7 +4,7 @@ export class Utils {
     private fileCache: CachedMetadata;
 
     /**
-     * Checks for the given settings. Is used for `Find unlinked files` and `Find unresolved links`
+     * Checks for the given settings. Is used for `Find orphaned files` and `Find broken links`
      * @param app 
      * @param filePath 
      * @param tagsToIgnore 
@@ -79,7 +79,9 @@ export class Utils {
                 fileIsAlreadyOpened = true;
             }
         });
-        if (!fileIsAlreadyOpened)
-            app.workspace.openLinkText(outputFileName, "/", true);
+        if (!fileIsAlreadyOpened) {
+            // app.workspace.getLeaf().openFile(app.vault.getAbstractFileByPath(outputFileName) as TFile);
+            app.workspace.openLinkText(outputFileName, "/");
+        }
     }
 }
