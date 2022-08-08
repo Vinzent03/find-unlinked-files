@@ -1,13 +1,18 @@
 {
   "name": "find-unlinked-files",
-  "version": "0.3.0",
-  "description": "Find files that are not linked anywhere and would otherwise be lost",
+  "version": "1.6.0",
+  "description": "Find files that are not linked anywhere and would otherwise be lost in your vault. In other words: files with no backlinks.",
   "main": "main.js",
   "scripts": {
     "dev": "rollup --config rollup.config.js -w",
-    "build": "rollup --config rollup.config.js"
+    "build": "rollup --config rollup.config.js",
+    "release": "standard-version"
   },
   "license": "MIT",
+  "author": "Vinzent",
+  "standard-version": {
+    "t": ""
+  },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^15.1.0",
     "@rollup/plugin-node-resolve": "^9.0.0",
@@ -16,6 +21,7 @@
     "obsidian": "https://github.com/obsidianmd/obsidian-api/tarball/master",
     "rollup": "^2.32.1",
     "tslib": "^2.0.3",
-    "typescript": "4.0.3"
+    "typescript": "4.0.3",
+    "standard-version": "^9.0.0"
   }
 }
