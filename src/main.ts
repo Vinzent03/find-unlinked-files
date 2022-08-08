@@ -23,9 +23,10 @@ export interface Settings {
 	withoutTagsDirectoriesToIgnore: string[];
 	withoutTagsFilesToIgnore: string[];
 	withoutTagsOutputFileName: string;
+	openOutputFile: boolean;
 }
 const DEFAULT_SETTINGS: Settings = {
-	outputFileName: "unlinked files output",
+	outputFileName: "orphaned files output",
 	disableWorkingLinks: false,
 	directoriesToIgnore: [],
 	filesToIgnore: [],
@@ -35,7 +36,7 @@ const DEFAULT_SETTINGS: Settings = {
 	fileTypesToDelete: [],
 	ignoreFileTypes: true,
 	ignoreDirectories: true,
-	unresolvedLinksOutputFileName: "unresolved links output",
+	unresolvedLinksOutputFileName: "broken links output",
 	unresolvedLinksDirectoriesToIgnore: [],
 	unresolvedLinksFilesToIgnore: [],
 	unresolvedLinksFileTypesToIgnore: [],
@@ -43,31 +44,33 @@ const DEFAULT_SETTINGS: Settings = {
 	unresolvedLinksTagsToIgnore: [],
 	withoutTagsDirectoriesToIgnore: [],
 	withoutTagsFilesToIgnore: [],
-	withoutTagsOutputFileName: "files without tags"
+	withoutTagsOutputFileName: "files without tags",
+	openOutputFile: true,
 };
-interface UnresolvedLink {
+
+interface BrokenLink {
 	link: string;
 	files: string[];
 }
-export default class FindUnlinkedFilesPlugin extends Plugin {
+export default class FindOrphanedFilesPlugin extends Plugin {
 	settings: Settings;
 	async onload() {
 		console.log('loading ' + this.manifest.name + " plugin");
 		await this.loadSettings();
 		this.addCommand({
 			id: 'find-unlinked-files',
-			name: 'Find unlinked files',
-			callback: () => this.findUnlinkedFiles(),
+			name: 'Find orphaned files',
+			callback: () => this.findOrphanedFiles(),
 		});
 		this.addCommand({
 			id: 'find-unresolved-link',
-			name: 'Find unresolved links',
-			callback: () => this.findUnresolvedLinks(),
+			name: 'Find broken links',
+			callback: () => this.findBrokenLinks(),
 		});
 		this.addCommand({
 			id: "delete-unlinked-files",
-			name: "Delete unlinked files with certain extension. See README",
-			callback: () => this.deleteUnlinkedFiles()
+			name: "Delete orphaned files with certain extension. See README",
+			callback: () => this.deleteOrphanedFiles()
 		});
 		this.addCommand({
 			id: "find-files-without-tags",
@@ -80,15 +83,15 @@ export default class FindUnlinkedFilesPlugin extends Plugin {
 			if (file instanceof TFolder) {
 				menu.addItem(cb => {
 					cb.setIcon("search");
-					cb.setTitle("Find unlinked files");
+					cb.setTitle("Find orphaned files");
 					// Add trailing slash to catch files named like the directory. See https://github.com/Vinzent03/find-unlinked-files/issues/24
-					cb.onClick((e) => { this.findUnlinkedFiles(file.path + "/"); });
+					cb.onClick((e) => { this.findOrphanedFiles(file.path + "/"); });
 				});
 			}
 		});
 	}
 
-	findUnlinkedFiles(dir?: string) {
+	findOrphanedFiles(dir?: string) {
 		const outFileName = this.settings.outputFileName + ".md";
 		let outFile: TFile;
 		const files = this.app.vault.getFiles();
@@ -119,12 +122,12 @@ export default class FindUnlinkedFilesPlugin extends Plugin {
 		notLinkedFiles.forEach((file) => {
 			text += prefix + "- [[" + this.app.metadataCache.fileToLinktext(file, "/", false) + "]]\n";
 		});
-		Utils.writeAndOpenFile(this.app, outFileName, text);
+		Utils.writeAndOpenFile(this.app, outFileName, text, this.settings.openOutputFile);
 
 	}
-	async deleteUnlinkedFiles() {
+	async deleteOrphanedFiles() {
 		if (!await this.app.vault.adapter.exists(this.settings.outputFileName + ".md")) {
-			new Notice("Can't find file - Please run the `Find unlinked files' command before");
+			new Notice("Can't find file - Please run the `Find orphaned files' command before");
 			return;
 		}
 		const links = this.app.metadataCache.getCache(this.settings.outputFileName + ".md")?.links ?? [];
@@ -142,12 +145,12 @@ export default class FindUnlinkedFilesPlugin extends Plugin {
 		if (filesToDelete.length > 0)
 			new DeleteFilesModal(this.app, filesToDelete).open();
 	}
-	findUnresolvedLinks() {
+	findBrokenLinks() {
 		const outFileName = this.settings.unresolvedLinksOutputFileName + ".md";
-		const links: UnresolvedLink[] = [];
-		const unresolvedLinks = this.app.metadataCache.unresolvedLinks;
+		const links: BrokenLink[] = [];
+		const brokenLinks = this.app.metadataCache.unresolvedLinks;
 
-		for (let filePath in unresolvedLinks) {
+		for (let filePath in brokenLinks) {
 			if (filePath == this.settings.unresolvedLinksOutputFileName + ".md") continue;
 
 			const fileType = filePath.substring(filePath.lastIndexOf(".") + 1);
@@ -162,7 +165,7 @@ export default class FindUnlinkedFilesPlugin extends Plugin {
 			);
 			if (!utils.isValid()) continue;
 
-			for (const link in unresolvedLinks[filePath]) {
+			for (const link in brokenLinks[filePath]) {
 				const linkFileType = link.substring(link.lastIndexOf(".") + 1);
 				console.log(linkFileType);
 
@@ -172,14 +175,14 @@ export default class FindUnlinkedFilesPlugin extends Plugin {
 				if (fileType == "md") {
 					formattedFilePath = filePath.substring(0, filePath.lastIndexOf(".md"));
 				}
-				const unresolvedLink: UnresolvedLink = { files: [formattedFilePath], link: link };
-				if (links.contains(unresolvedLink))
+				const brokenLink: BrokenLink = { files: [formattedFilePath], link: link };
+				if (links.contains(brokenLink))
 					continue;
 				const duplication = links.find((e) => e.link == link);
 				if (duplication) {
 					duplication.files.push(formattedFilePath);
 				} else {
-					links.push(unresolvedLink);
+					links.push(brokenLink);
 				}
 			}
 		}
@@ -189,7 +192,8 @@ export default class FindUnlinkedFilesPlugin extends Plugin {
 			[
 				"Don't forget that creating the file from here may create the file in the wrong directory!",
 				...links.map((e) => `- [[${e.link}]] in [[${e.files.join("]], [[")}]]`)
-			].join("\n"));
+			].join("\n"),
+			this.settings.openOutputFile);
 
 	}
 
@@ -214,11 +218,11 @@ export default class FindUnlinkedFilesPlugin extends Plugin {
 		else
 			prefix = "";
 		const text = withoutFiles.map((file) => `${prefix}- [[${file.path}]]`).join("\n");
-		Utils.writeAndOpenFile(this.app, outFileName, text);
+		Utils.writeAndOpenFile(this.app, outFileName, text, this.settings.openOutputFile);
 	}
 
 	/**
-	 * Checks if the given file in an unlinked file
+	 * Checks if the given file in an orphaned file
 	 * 
 	 * @param file file to check
 	 * @param links all links in the vault

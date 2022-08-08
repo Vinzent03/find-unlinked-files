@@ -4,7 +4,7 @@ export class Utils {
     private fileCache: CachedMetadata;
 
     /**
-     * Checks for the given settings. Is used for `Find unlinked files` and `Find unresolved links`
+     * Checks for the given settings. Is used for `Find orphaned files` and `Find broken links`
      * @param app 
      * @param filePath 
      * @param tagsToIgnore 
@@ -70,8 +70,9 @@ export class Utils {
      * @param outputFileName name of the output file
      * @param text data to be written to the file
      */
-    static async writeAndOpenFile(app: App, outputFileName: string, text: string) {
+    static async writeAndOpenFile(app: App, outputFileName: string, text: string, openFile: boolean) {
         await app.vault.adapter.write(outputFileName, text);
+        if (!openFile) return;
 
         let fileIsAlreadyOpened = false;
         app.workspace.iterateAllLeaves(leaf => {
@@ -79,8 +80,6 @@ export class Utils {
                 fileIsAlreadyOpened = true;
             }
         });
-
-
         if (!fileIsAlreadyOpened) {
             const newPane = app.workspace.getLeavesOfType("empty").length == 0;
             if (newPane) {

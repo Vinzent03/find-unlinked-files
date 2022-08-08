@@ -1,21 +1,21 @@
-# Find unlinked files (files with no backlinks) and unresolved links
+# Find orphaned files (files with no backlinks) and broken links
 A Plugin for [Obsidian](https://obsidian.md)
 
 ## How does it work?
 
-### Find unlinked files
+### Find orphaned files
 
 This plugin goes through your whole vault and searches for files, which are linked nowhere. In other words: Files with no backlinks.
 
-In the end, it will create a file with a list of links to these unlinked files. Now you can either delete these unused files or link them somewhere in your vault.
+In the end, it will create a file with a list of links to these orphaned files. Now you can either delete these unused files or link them somewhere in your vault.
 
-### Find unresolved links
+### Find broken links
 
 It creates a file with a list of links, which linked file has not been created yet.
 
 
 ## How to use
-Call the command `Find unlinked files` and the file `Find unlinked files plugin output.md` will be created in your vault root and opened in a new pane. 
+Call the command `Find orphaned files` and the file `Find orphaned files plugin output.md` will be created in your vault root and opened in a new pane. 
 
 ## Additional features:
 - add files to ignore
@@ -39,7 +39,7 @@ Custom plugins are only available for Obsidian v0.9.7+.
 1. Open settings -> Third party plugin
 2. Disable Safe mode
 3. Click Browse community plugins
-4. Search for "Find unlinked files"
+4. Search for "Find orphaned files and broken links"
 5. Install it
 6. Activate it under Installed plugins
 
@@ -49,7 +49,7 @@ Custom plugins are only available for Obsidian v0.9.7+.
 2. Move `manifest.json` and `main.js` to `<vault>/.obsidian/plugins/find-unlinked-files`
 3. Reload Obsidian (Str + r)
 4. Go to settings and disable safe mode
-5. Enable `Find unlinked files`
+5. Enable `Find orphaned files adn broken links`
 
 If you find this plugin useful and would like to support its development, you can support me on [Ko-fi](https://Ko-fi.com/Vinzent).
 

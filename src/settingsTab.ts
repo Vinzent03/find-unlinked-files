@@ -1,9 +1,9 @@
 import { App, normalizePath, PluginSettingTab, Setting } from 'obsidian';
-import FindUnlinkedFilesPlugin, { Settings } from './main';
+import FindOrphanedFilesPlugin, { Settings } from './main';
 
 export class SettingsTab extends PluginSettingTab {
-    plugin: FindUnlinkedFilesPlugin;
-    constructor(app: App, plugin: FindUnlinkedFilesPlugin, private defaultSettings: Settings) {
+    plugin: FindOrphanedFilesPlugin;
+    constructor(app: App, plugin: FindOrphanedFilesPlugin, private defaultSettings: Settings) {
         super(app, plugin);
         this.plugin = plugin;
     }
@@ -24,7 +24,17 @@ export class SettingsTab extends PluginSettingTab {
         containerEl.empty();
         containerEl.createEl("h2", { text: this.plugin.manifest.name });
 
-        containerEl.createEl("h4", { text: "Settings for find unlinked files" });
+        containerEl.createEl("h4", { text: "Settings for finding orphaned files" });
+
+        new Setting(containerEl)
+            .setName("Open output file")
+            .addToggle(cb =>
+                cb.setValue(this.plugin.settings.openOutputFile)
+                    .onChange(value => {
+                        this.plugin.settings.openOutputFile = value;
+                        this.plugin.saveSettings();
+                    }));
+
         new Setting(containerEl)
             .setName('Output file name')
             .setDesc('Set name of output file (without file extension). Make sure no file exists with this name because it will be overwritten! If the name is empty, the default name is set.')
@@ -47,8 +57,8 @@ export class SettingsTab extends PluginSettingTab {
             ).setValue(this.plugin.settings.disableWorkingLinks));
 
         new Setting(containerEl)
-            .setName("Ignore or include files in the given directories")
-            .setDesc("Enable to ignore files in the given directories. Disable to only include files in the given directories")
+            .setName("Exclude files in the given directories")
+            .setDesc("Enable to exclude files in the given directories. Disable to only include files in the given directories")
             .addToggle(cb =>
                 cb.setValue(this.plugin.settings.ignoreDirectories)
                     .onChange(value => {
@@ -68,7 +78,7 @@ export class SettingsTab extends PluginSettingTab {
                     this.plugin.saveSettings();
                 }));
         new Setting(containerEl)
-            .setName("Files to ignore.")
+            .setName("Exclude files")
             .setDesc("Add each file path in a new line (with file extension!)")
             .addTextArea(cb => cb
                 .setPlaceholder("Directory/file.md")
@@ -79,8 +89,8 @@ export class SettingsTab extends PluginSettingTab {
                     this.plugin.saveSettings();
                 }));
         new Setting(containerEl)
-            .setName("Links to ignore.")
-            .setDesc("Ignore files, which contain the given file as link. Add each file path in a new line (with file extension!). Set it to `*` to ignore files with links.")
+            .setName("Exclude links")
+            .setDesc("Exclude files, which contain the given file as link. Add each file path in a new line (with file extension!). Set it to `*` to exclude files with links.")
             .addTextArea(cb => cb
                 .setPlaceholder("Directory/file.md")
                 .setValue(this.plugin.settings.linksToIgnore.join("\n"))
@@ -90,8 +100,8 @@ export class SettingsTab extends PluginSettingTab {
                     this.plugin.saveSettings();
                 }));
         new Setting(containerEl)
-            .setName("Ignore or include files with the given filetypes")
-            .setDesc("Enable to ignore files with the given filetypes. Disable to only include files with the given filetypes")
+            .setName("Exclude files with the given filetypes")
+            .setDesc("Enable to exclude files with the given filetypes. Disable to only include files with the given filetypes")
             .addToggle(cb =>
                 cb.setValue(this.plugin.settings.ignoreFileTypes)
                     .onChange(value => {
@@ -110,8 +120,8 @@ export class SettingsTab extends PluginSettingTab {
                     this.plugin.saveSettings();
                 }));
         new Setting(containerEl)
-            .setName("Tags to ignore.")
-            .setDesc("Ignore files, which contain the given tag. Add each tag separated by comma (without `#`)")
+            .setName("Exclude tags")
+            .setDesc("Exclude files, which contain the given tag. Add each tag separated by comma (without `#`)")
             .addTextArea(cb => cb
                 .setPlaceholder("todo,unfinished")
                 .setValue(this.plugin.settings.tagsToIgnore.join(","))
@@ -133,8 +143,8 @@ export class SettingsTab extends PluginSettingTab {
                 }));
 
 
-        /// Settings for find unresolvedLinks
-        containerEl.createEl("h4", { text: "Settings for find unresolved links" });
+        /// Settings for find brokenLinks
+        containerEl.createEl("h4", { text: "Settings for finding broken links" });
 
         new Setting(containerEl)
             .setName('Output file name')
@@ -149,8 +159,8 @@ export class SettingsTab extends PluginSettingTab {
             }).setValue(this.plugin.settings.unresolvedLinksOutputFileName));
 
         new Setting(containerEl)
-            .setName("Directories to ignore.")
-            .setDesc("Ignore links in files in the specified directory. Add each directory path in a new line")
+            .setName("Exclude directories")
+            .setDesc("Exclude links in files in the specified directory. Add each directory path in a new line")
             .addTextArea(cb => cb
                 .setPlaceholder("Directory/Subdirectory")
                 .setValue(this.plugin.settings.unresolvedLinksDirectoriesToIgnore.join("\n"))
@@ -160,8 +170,8 @@ export class SettingsTab extends PluginSettingTab {
                     this.plugin.saveSettings();
                 }));
         new Setting(containerEl)
-            .setName("Files to ignore.")
-            .setDesc("Ignore links in the specified file. Add each file path in a new line (with file extension!)")
+            .setName("Exclude files")
+            .setDesc("Exclude links in the specified file. Add each file path in a new line (with file extension!)")
             .addTextArea(cb => cb
                 .setPlaceholder("Directory/file.md")
                 .setValue(this.plugin.settings.unresolvedLinksFilesToIgnore.join("\n"))
@@ -171,8 +181,8 @@ export class SettingsTab extends PluginSettingTab {
                     this.plugin.saveSettings();
                 }));
         new Setting(containerEl)
-            .setName("Links to ignore.")
-            .setDesc("Ignore files, which contain the given file as link. Add each file path in a new line (with file extension!). Set it to `*` to ignore files with links.")
+            .setName("Exclude links")
+            .setDesc("Exclude files, which contain the given file as link. Add each file path in a new line (with file extension!). Set it to `*` to exclude files with links.")
             .addTextArea(cb => cb
                 .setPlaceholder("Directory/file.md")
                 .setValue(this.plugin.settings.unresolvedLinksLinksToIgnore.join("\n"))
@@ -182,8 +192,8 @@ export class SettingsTab extends PluginSettingTab {
                     this.plugin.saveSettings();
                 }));
         new Setting(containerEl)
-            .setName("Filetypes to ignore.")
-            .setDesc("Ignore links with the specified filetype. Add each filetype separated by comma")
+            .setName("Exclude filetypes")
+            .setDesc("Exclude links with the specified filetype. Add each filetype separated by comma")
             .addTextArea(cb => cb
                 .setPlaceholder("docx,txt")
                 .setValue(this.plugin.settings.unresolvedLinksFileTypesToIgnore.join(","))
@@ -193,8 +203,8 @@ export class SettingsTab extends PluginSettingTab {
                     this.plugin.saveSettings();
                 }));
         new Setting(containerEl)
-            .setName("Tags to ignore.")
-            .setDesc("Ignore links in files, which contain the given tag. Add each tag separated by comma (without `#`)")
+            .setName("Exclude tags")
+            .setDesc("Exclude links in files, which contain the given tag. Add each tag separated by comma (without `#`)")
             .addTextArea(cb => cb
                 .setPlaceholder("todo,unfinished")
                 .setValue(this.plugin.settings.unresolvedLinksTagsToIgnore.join(","))
@@ -204,7 +214,7 @@ export class SettingsTab extends PluginSettingTab {
                     this.plugin.saveSettings();
                 }));
 
-        containerEl.createEl("h4", { text: "Settings for find files without tags" });
+        containerEl.createEl("h4", { text: "Settings for finding files without tags" });
 
         new Setting(containerEl)
             .setName('Output file name')
@@ -219,8 +229,8 @@ export class SettingsTab extends PluginSettingTab {
             }).setValue(this.plugin.settings.withoutTagsOutputFileName));
 
         new Setting(containerEl)
-            .setName("Files to ignore.")
-            .setDesc("Ignore the specific files. Add each file path in a new line (with file extension!)")
+            .setName("Exclude files")
+            .setDesc("Exclude the specific files. Add each file path in a new line (with file extension!)")
             .addTextArea(cb => cb
                 .setPlaceholder("Directory/file.md")
                 .setValue(this.plugin.settings.withoutTagsFilesToIgnore.join("\n"))
@@ -231,8 +241,8 @@ export class SettingsTab extends PluginSettingTab {
                 }));
 
         new Setting(containerEl)
-            .setName("Directories to ignore.")
-            .setDesc("Ignore files in the specified directories. Add each directory path in a new line")
+            .setName("Exclude directories")
+            .setDesc("Exclude files in the specified directories. Add each directory path in a new line")
             .addTextArea(cb => cb
                 .setPlaceholder("Directory/Subdirectory")
                 .setValue(this.plugin.settings.withoutTagsDirectoriesToIgnore.join("\n"))
