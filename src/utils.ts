@@ -1,4 +1,4 @@
-import { App, CachedMetadata, getAllTags, iterateCacheRefs } from "obsidian";
+import { App, CachedMetadata, getAllTags, iterateCacheRefs, TFile } from "obsidian";
 
 export class Utils {
     private fileCache: CachedMetadata;
@@ -81,8 +81,18 @@ export class Utils {
             }
         });
         if (!fileIsAlreadyOpened) {
-            // app.workspace.getLeaf().openFile(app.vault.getAbstractFileByPath(outputFileName) as TFile);
-            app.workspace.openLinkText(outputFileName, "/");
+            const newPane = app.workspace.getLeavesOfType("empty").length == 0;
+            if (newPane) {
+                app.workspace.openLinkText(outputFileName, "/", true);
+            } else {
+                const file = app.vault.getAbstractFileByPath(outputFileName);
+
+                if (file instanceof TFile) {
+                    await app.workspace.getLeavesOfType("empty")[0].openFile(file);
+                } else {
+                    app.workspace.openLinkText(outputFileName, "/", true);
+                }
+            }
         }
     }
 }
