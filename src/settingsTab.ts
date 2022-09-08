@@ -48,6 +48,15 @@ export class SettingsTab extends PluginSettingTab {
             }).setValue(this.plugin.settings.outputFileName));
 
         new Setting(containerEl)
+            .setName('Include Header')
+            .setDesc('Include a header at the top of the file (same as the output file name)')
+            .addToggle(cb => cb.onChange(value => {
+                this.plugin.settings.includeHeader = value;
+                this.plugin.saveSettings();
+            }
+            ).setValue(this.plugin.settings.includeHeader));
+
+        new Setting(containerEl)
             .setName('Disable working links')
             .setDesc('Indent lines to disable the link and to clean up the graph view')
             .addToggle(cb => cb.onChange(value => {
@@ -227,6 +236,15 @@ export class SettingsTab extends PluginSettingTab {
                 }
                 this.plugin.saveSettings();
             }).setValue(this.plugin.settings.withoutTagsOutputFileName));
+
+        new Setting(containerEl)
+            .setName('Include Header')
+            .setDesc('Include a header at the top of the file (same as the output file name)')
+            .addToggle(cb => cb.onChange(value => {
+                this.plugin.settings.withoutTagsIncludeHeader = value;
+                this.plugin.saveSettings();
+            }
+            ).setValue(this.plugin.settings.withoutTagsIncludeHeader));
 
         new Setting(containerEl)
             .setName("Exclude files")
