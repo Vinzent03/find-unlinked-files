@@ -5,6 +5,7 @@ import { Utils } from './utils';
 
 export interface Settings {
 	outputFileName: string;
+	includeHeader: boolean;
 	disableWorkingLinks: boolean;
 	directoriesToIgnore: string[];
 	filesToIgnore: string[];
@@ -23,10 +24,12 @@ export interface Settings {
 	withoutTagsDirectoriesToIgnore: string[];
 	withoutTagsFilesToIgnore: string[];
 	withoutTagsOutputFileName: string;
+	withoutTagsIncludeHeader: boolean;
 	openOutputFile: boolean;
 }
 const DEFAULT_SETTINGS: Settings = {
 	outputFileName: "orphaned files output",
+	includeHeader: false,
 	disableWorkingLinks: false,
 	directoriesToIgnore: [],
 	filesToIgnore: [],
@@ -45,6 +48,7 @@ const DEFAULT_SETTINGS: Settings = {
 	withoutTagsDirectoriesToIgnore: [],
 	withoutTagsFilesToIgnore: [],
 	withoutTagsOutputFileName: "files without tags",
+	withoutTagsIncludeHeader: false,
 	openOutputFile: true,
 };
 
@@ -114,6 +118,8 @@ export default class FindOrphanedFilesPlugin extends Plugin {
 
 
 		let text = "";
+		if (this.settings.includeHeader)
+			text += "# " + this.settings.outputFileName + "\n";
 		let prefix: string;
 		if (this.settings.disableWorkingLinks)
 			prefix = "	";
@@ -217,7 +223,10 @@ export default class FindOrphanedFilesPlugin extends Plugin {
 			prefix = "	";
 		else
 			prefix = "";
-		const text = withoutFiles.map((file) => `${prefix}- [[${file.path}]]`).join("\n");
+		let text = "";
+		if (this.settings.withoutTagsIncludeHeader)
+			text += "# " + this.settings.withoutTagsOutputFileName + "\n";
+		text += withoutFiles.map((file) => `${prefix}- [[${file.path}]]`).join("\n");
 		Utils.writeAndOpenFile(this.app, outFileName, text, this.settings.openOutputFile);
 	}
 
