@@ -52,8 +52,10 @@ interface BrokenLink {
 	link: string;
 	files: string[];
 }
+
 export default class FindOrphanedFilesPlugin extends Plugin {
 	settings: Settings;
+	findExtensionRegex = /(\.[^.]+)$/;
 	async onload() {
 		console.log('loading ' + this.manifest.name + " plugin");
 		await this.loadSettings();
@@ -71,6 +73,11 @@ export default class FindOrphanedFilesPlugin extends Plugin {
 			id: "delete-unlinked-files",
 			name: "Delete orphaned files with certain extension. See README",
 			callback: () => this.deleteOrphanedFiles()
+		});
+		this.addCommand({
+			id: "create-files-of-broken-links",
+			name: "Create files of broken links",
+			callback: () => this.createFilesOfBrokenLinks()
 		});
 		this.addCommand({
 			id: "find-files-without-tags",
@@ -91,12 +98,46 @@ export default class FindOrphanedFilesPlugin extends Plugin {
 		});
 	}
 
+	async createFilesOfBrokenLinks() {
+		if (!await this.app.vault.adapter.exists(this.settings.unresolvedLinksOutputFileName + ".md")) {
+			new Notice("Can't find file - Please run the `Find broken files' command before");
+			return;
+		}
+		const links = this.app.metadataCache.getCache(this.settings.unresolvedLinksOutputFileName + ".md")?.links;
+		if (!links) {
+			new Notice("No broken links found");
+			return;
+		}
+		const filesToCreate: string[] = [];
+
+		for (const link of links) {
+			const file = this.app.metadataCache.getFirstLinkpathDest(link.link, "/");
+			if (file)
+				continue;
+			const foundType = this.findExtensionRegex.exec(link.link)?.[0];
+			if ((foundType ?? ".md") == ".md") {
+				if (foundType) {
+					filesToCreate.push(link.link);
+				} else {
+					filesToCreate.push(link.link + ".md");
+				}
+			}
+		}
+
+
+		if (filesToCreate) {
+			for (const file of filesToCreate) {
+				await this.app.vault.create(file, "");
+			}
+		}
+	}
+
 	findOrphanedFiles(dir?: string) {
 		const outFileName = this.settings.outputFileName + ".md";
 		let outFile: TFile;
 		const files = this.app.vault.getFiles();
 		const markdownFiles = this.app.vault.getMarkdownFiles();
-		let links: string[] = [];
+		const links: string[] = [];
 
 		markdownFiles.forEach((markFile: TFile) => {
 			if (markFile.path == outFileName) {
@@ -104,7 +145,7 @@ export default class FindOrphanedFilesPlugin extends Plugin {
 				return;
 			}
 			iterateCacheRefs(this.app.metadataCache.getFileCache(markFile), cb => {
-				let txt = this.app.metadataCache.getFirstLinkpathDest(getLinkpath(cb.link), markFile.path);
+				const txt = this.app.metadataCache.getFirstLinkpathDest(getLinkpath(cb.link), markFile.path);
 				if (txt != null)
 					links.push(txt.path);
 			});
@@ -132,7 +173,6 @@ export default class FindOrphanedFilesPlugin extends Plugin {
 		}
 		const links = this.app.metadataCache.getCache(this.settings.outputFileName + ".md")?.links ?? [];
 		const filesToDelete: TFile[] = [];
-		console.log(this.settings.fileTypesToDelete);
 		links.forEach((link) => {
 			const file = this.app.metadataCache.getFirstLinkpathDest(link.link, "/");
 			if (!file)
@@ -150,14 +190,14 @@ export default class FindOrphanedFilesPlugin extends Plugin {
 		const links: BrokenLink[] = [];
 		const brokenLinks = this.app.metadataCache.unresolvedLinks;
 
-		for (let filePath in brokenLinks) {
-			if (filePath == this.settings.unresolvedLinksOutputFileName + ".md") continue;
+		for (const sourceFilepath in brokenLinks) {
+			if (sourceFilepath == this.settings.unresolvedLinksOutputFileName + ".md") continue;
 
-			const fileType = filePath.substring(filePath.lastIndexOf(".") + 1);
+			const fileType = sourceFilepath.substring(sourceFilepath.lastIndexOf(".") + 1);
 
 			const utils = new Utils(
 				this.app,
-				filePath,
+				sourceFilepath,
 				this.settings.unresolvedLinksTagsToIgnore,
 				this.settings.unresolvedLinksLinksToIgnore,
 				this.settings.unresolvedLinksDirectoriesToIgnore,
@@ -165,15 +205,14 @@ export default class FindOrphanedFilesPlugin extends Plugin {
 			);
 			if (!utils.isValid()) continue;
 
-			for (const link in brokenLinks[filePath]) {
+			for (const link in brokenLinks[sourceFilepath]) {
 				const linkFileType = link.substring(link.lastIndexOf(".") + 1);
-				console.log(linkFileType);
 
 				if (this.settings.unresolvedLinksFileTypesToIgnore.contains(linkFileType)) continue;
 
-				let formattedFilePath = filePath;
+				let formattedFilePath = sourceFilepath;
 				if (fileType == "md") {
-					formattedFilePath = filePath.substring(0, filePath.lastIndexOf(".md"));
+					formattedFilePath = sourceFilepath.substring(0, sourceFilepath.lastIndexOf(".md"));
 				}
 				const brokenLink: BrokenLink = { files: [formattedFilePath], link: link };
 				if (links.contains(brokenLink))
