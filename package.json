@@ -1,6 +1,6 @@
 {
   "name": "find-unlinked-files",
-  "version": "1.6.1",
+  "version": "1.7.0",
   "description": "Find files that are not linked anywhere and would otherwise be lost in your vault. In other words: files with no backlinks.",
   "main": "main.js",
   "scripts": {
