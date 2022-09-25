@@ -23,6 +23,10 @@ export interface Settings {
 	withoutTagsDirectoriesToIgnore: string[];
 	withoutTagsFilesToIgnore: string[];
 	withoutTagsOutputFileName: string;
+	emptyFilesOutputFileName: string;
+	emptyFilesDirectories: string[];
+	emptyFilesFilesToIgnore: string[];
+	emptyFilesIgnoreDirectories: boolean;
 	openOutputFile: boolean;
 }
 const DEFAULT_SETTINGS: Settings = {
@@ -45,6 +49,10 @@ const DEFAULT_SETTINGS: Settings = {
 	withoutTagsDirectoriesToIgnore: [],
 	withoutTagsFilesToIgnore: [],
 	withoutTagsOutputFileName: "files without tags",
+	emptyFilesOutputFileName: "empty files",
+	emptyFilesDirectories: [],
+	emptyFilesFilesToIgnore: [],
+	emptyFilesIgnoreDirectories: true,
 	openOutputFile: true,
 };
 
@@ -83,6 +91,16 @@ export default class FindOrphanedFilesPlugin extends Plugin {
 			id: "find-files-without-tags",
 			name: "Find files without tags",
 			callback: () => this.findFilesWithoutTags()
+		});
+		this.addCommand({
+			id: "find-empty-files",
+			name: "Find empty files",
+			callback: () => this.findEmptyFiles()
+		});
+		this.addCommand({
+			id: "delete-empty-files",
+			name: "Delete empty files",
+			callback: () => this.deleteEmptyFiles()
 		});
 		this.addSettingTab(new SettingsTab(this.app, this, DEFAULT_SETTINGS));
 
@@ -130,6 +148,37 @@ export default class FindOrphanedFilesPlugin extends Plugin {
 				await this.app.vault.create(file, "");
 			}
 		}
+	}
+
+	async findEmptyFiles() {
+		const files = this.app.vault.getFiles();
+		const emptyFiles: TFile[] = [];
+		for (const file of files) {
+			if (!new Utils(this.app, file.path, [], [], this.settings.emptyFilesDirectories, this.settings.emptyFilesFilesToIgnore, this.settings.emptyFilesIgnoreDirectories).isValid()) {
+				continue;
+			}
+			const content = await this.app.vault.read(file);
+			const trimmedContent = content.trim();
+			if (!trimmedContent) {
+				emptyFiles.push(file);
+			}
+			const cache = app.metadataCache.getFileCache(file);
+			const frontmatter = cache?.frontmatter;
+			if (frontmatter) {
+				const lines = content.trimRight().split("\n").length;
+				if (frontmatter.position.end.line == lines - 1) {
+					emptyFiles.push(file);
+				}
+			}
+		}
+		console.log(emptyFiles);
+		let prefix: string;
+		if (this.settings.disableWorkingLinks)
+			prefix = "	";
+		else
+			prefix = "";
+		const text = emptyFiles.map((file) => `${prefix}- [[${file.path}]]`).join("\n");
+		Utils.writeAndOpenFile(this.app, this.settings.emptyFilesOutputFileName + ".md", text, this.settings.openOutputFile);
 	}
 
 	findOrphanedFiles(dir?: string) {
@@ -185,6 +234,26 @@ export default class FindOrphanedFilesPlugin extends Plugin {
 		if (filesToDelete.length > 0)
 			new DeleteFilesModal(this.app, filesToDelete).open();
 	}
+
+	async deleteEmptyFiles() {
+		if (!await this.app.vault.adapter.exists(this.settings.emptyFilesOutputFileName + ".md")) {
+			new Notice("Can't find file - Please run the `Find orphaned files' command before");
+			return;
+		}
+		const links = this.app.metadataCache.getCache(this.settings.emptyFilesOutputFileName + ".md")?.links ?? [];
+		const filesToDelete: TFile[] = [];
+		for (const link of links) {
+			const file = this.app.metadataCache.getFirstLinkpathDest(link.link, "/");
+			if (!file)
+				return;
+
+			filesToDelete.push(file);
+
+		};
+		if (filesToDelete.length > 0)
+			new DeleteFilesModal(this.app, filesToDelete).open();
+	}
+
 	findBrokenLinks() {
 		const outFileName = this.settings.unresolvedLinksOutputFileName + ".md";
 		const links: BrokenLink[] = [];

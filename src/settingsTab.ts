@@ -251,5 +251,42 @@ export class SettingsTab extends PluginSettingTab {
                     this.plugin.settings.withoutTagsDirectoriesToIgnore = paths;
                     this.plugin.saveSettings();
                 }));
+
+        /// Settings for empty files
+        containerEl.createEl("h4", { text: "Settings for finding empty files" });
+
+        new Setting(containerEl)
+            .setName("Exclude files in the given directories")
+            .setDesc("Enable to exclude files in the given directories. Disable to only include files in the given directories")
+            .addToggle(cb =>
+                cb.setValue(this.plugin.settings.emptyFilesIgnoreDirectories)
+                    .onChange(value => {
+                        this.plugin.settings.emptyFilesIgnoreDirectories = value;
+                        this.plugin.saveSettings();
+                    }));
+
+        new Setting(containerEl)
+            .setName("Directories")
+            .setDesc("Add each directory path in a new line")
+            .addTextArea(cb => cb
+                .setPlaceholder("Directory/Subdirectory")
+                .setValue(this.plugin.settings.emptyFilesDirectories.join("\n"))
+                .onChange((value) => {
+                    let paths = value.trim().split("\n").map(value => this.formatPath(value, true));
+                    this.plugin.settings.emptyFilesDirectories = paths;
+                    this.plugin.saveSettings();
+                }));
+        new Setting(containerEl)
+            .setName("Exclude files")
+            .setDesc("Add each file path in a new line (with file extension!)")
+            .addTextArea(cb => cb
+                .setPlaceholder("Directory/file.md")
+                .setValue(this.plugin.settings.emptyFilesFilesToIgnore.join("\n"))
+                .onChange((value) => {
+                    let paths = value.trim().split("\n").map(value => this.formatPath(value, false));
+                    this.plugin.settings.emptyFilesFilesToIgnore = paths;
+                    this.plugin.saveSettings();
+                }));
+
     }
 }

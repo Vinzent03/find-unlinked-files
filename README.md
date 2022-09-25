@@ -11,8 +11,13 @@ In the end, it will create a file with a list of links to these orphaned files. 
 
 ### Find broken links
 
-It creates a file with a list of links, which linked file has not been created yet.
+Creates a file with a list of links, which linked file has not been created yet.
 
+In addition, there is a command to create those linked files.
+
+### Find empty files
+
+Creates a file with a list of empty files. Files with just frontmatter are considered empty as well.
 
 ## How to use
 Call the command `Find orphaned files` and the file `Find orphaned files plugin output.md` will be created in your vault root and opened in a new pane. 
