@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.8.0](https://github.com/Vinzent03/find-unlinked-files/compare/1.7.0...1.8.0) (2022-09-26)
+
+
+### Features
+
+* directory whitelist for broken links ([3c633a7](https://github.com/Vinzent03/find-unlinked-files/commit/3c633a70e27755e5da7c920f4c514b017f6a0bca)), closes [#34](https://github.com/Vinzent03/find-unlinked-files/issues/34)
+
 ## [1.7.0](https://github.com/Vinzent03/find-unlinked-files/compare/1.6.1...1.7.0) (2022-09-25)
 
 
