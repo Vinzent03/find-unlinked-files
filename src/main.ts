@@ -173,7 +173,6 @@ export default class FindOrphanedFilesPlugin extends Plugin {
 				}
 			}
 		}
-		console.log(emptyFiles);
 		let prefix: string;
 		if (this.settings.disableWorkingLinks)
 			prefix = "	";
