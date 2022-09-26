@@ -159,8 +159,18 @@ export class SettingsTab extends PluginSettingTab {
             }).setValue(this.plugin.settings.unresolvedLinksOutputFileName));
 
         new Setting(containerEl)
-            .setName("Exclude directories")
-            .setDesc("Exclude links in files in the specified directory. Add each directory path in a new line")
+            .setName("Exclude files in the given directories")
+            .setDesc("Enable to exclude files in the given directories. Disable to only include files in the given directories")
+            .addToggle(cb =>
+                cb.setValue(this.plugin.settings.unresolvedLinksIgnoreDirectories)
+                    .onChange(value => {
+                        this.plugin.settings.unresolvedLinksIgnoreDirectories = value;
+                        this.plugin.saveSettings();
+                    }));
+
+        new Setting(containerEl)
+            .setName("Directories")
+            .setDesc("Add each directory path in a new line")
             .addTextArea(cb => cb
                 .setPlaceholder("Directory/Subdirectory")
                 .setValue(this.plugin.settings.unresolvedLinksDirectoriesToIgnore.join("\n"))
@@ -169,6 +179,7 @@ export class SettingsTab extends PluginSettingTab {
                     this.plugin.settings.unresolvedLinksDirectoriesToIgnore = paths;
                     this.plugin.saveSettings();
                 }));
+
         new Setting(containerEl)
             .setName("Exclude files")
             .setDesc("Exclude links in the specified file. Add each file path in a new line (with file extension!)")

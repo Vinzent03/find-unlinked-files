@@ -14,6 +14,7 @@ export interface Settings {
 	fileTypesToDelete: string[];
 	ignoreFileTypes: boolean;
 	ignoreDirectories: boolean;
+	unresolvedLinksIgnoreDirectories: boolean;
 	unresolvedLinksDirectoriesToIgnore: string[];
 	unresolvedLinksFilesToIgnore: string[];
 	unresolvedLinksFileTypesToIgnore: string[];
@@ -40,6 +41,7 @@ const DEFAULT_SETTINGS: Settings = {
 	fileTypesToDelete: [],
 	ignoreFileTypes: true,
 	ignoreDirectories: true,
+	unresolvedLinksIgnoreDirectories: true,
 	unresolvedLinksOutputFileName: "broken links output",
 	unresolvedLinksDirectoriesToIgnore: [],
 	unresolvedLinksFilesToIgnore: [],
@@ -270,7 +272,8 @@ export default class FindOrphanedFilesPlugin extends Plugin {
 				this.settings.unresolvedLinksTagsToIgnore,
 				this.settings.unresolvedLinksLinksToIgnore,
 				this.settings.unresolvedLinksDirectoriesToIgnore,
-				this.settings.unresolvedLinksFilesToIgnore
+				this.settings.unresolvedLinksFilesToIgnore,
+				this.settings.unresolvedLinksIgnoreDirectories,
 			);
 			if (!utils.isValid()) continue;
 
