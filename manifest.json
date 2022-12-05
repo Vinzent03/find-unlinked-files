@@ -4,6 +4,7 @@
   "version": "1.8.0",
   "description": "Find files that are not linked anywhere and would otherwise be lost in your vault. In other words: files with no backlinks.",
   "author": "Vinzent",
+  "fundingUrl": "https://ko-fi.com/vinzent",
   "authorUrl": "https://github.com/Vinzent03",
   "isDesktopOnly": false
 }
