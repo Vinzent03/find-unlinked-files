@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.9.0](https://github.com/Vinzent03/find-unlinked-files/compare/1.8.1...1.9.0) (2023-03-27)
+
+
+### Features
+
+* sort orphaned files by size ([aa2aa0b](https://github.com/Vinzent03/find-unlinked-files/commit/aa2aa0b39c884119efbc8c6d78e9d56c15fc8330)), closes [#40](https://github.com/Vinzent03/find-unlinked-files/issues/40)
+
 ## [1.8.0](https://github.com/Vinzent03/find-unlinked-files/compare/1.7.0...1.8.0) (2022-09-26)
 
 
