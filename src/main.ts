@@ -248,6 +248,9 @@ export default class FindOrphanedFilesPlugin extends Plugin {
         let prefix: string;
         if (this.settings.disableWorkingLinks) prefix = "	";
         else prefix = "";
+
+        notLinkedFiles.sort((a, b) => b.stat.size - a.stat.size);
+
         notLinkedFiles.forEach((file) => {
             text +=
                 prefix +
