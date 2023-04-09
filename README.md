@@ -54,7 +54,7 @@ Custom plugins are only available for Obsidian v0.9.7+.
 2. Move `manifest.json` and `main.js` to `<vault>/.obsidian/plugins/find-unlinked-files`
 3. Reload Obsidian (Str + r)
 4. Go to settings and disable safe mode
-5. Enable `Find orphaned files adn broken links`
+5. Enable `Find orphaned files and broken links`
 
 If you find this plugin useful and would like to support its development, you can support me on [Ko-fi](https://Ko-fi.com/Vinzent).
 
