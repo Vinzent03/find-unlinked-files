@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.9.1](https://github.com/Vinzent03/find-unlinked-files/compare/1.9.0...1.9.1) (2023-08-24)
+
+
+### Bug Fixes
+
+* typo in README ([118d54e](https://github.com/Vinzent03/find-unlinked-files/commit/118d54ef2c66c5521fc0cfb5654d2e864f7ce512))
+* work in Obsidian 1.4.0 ([3b7df5d](https://github.com/Vinzent03/find-unlinked-files/commit/3b7df5dd15200ecb7b080d1cb66b6d9baa0dd7f8)), closes [#51](https://github.com/Vinzent03/find-unlinked-files/issues/51)
+
 ## [1.9.0](https://github.com/Vinzent03/find-unlinked-files/compare/1.8.1...1.9.0) (2023-03-27)
 
 
