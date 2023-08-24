@@ -4,8 +4,8 @@
   "description": "Find files that are not linked anywhere and would otherwise be lost in your vault. In other words: files with no backlinks.",
   "main": "main.js",
   "scripts": {
-    "dev": "rollup --config rollup.config.js -w",
-    "build": "rollup --config rollup.config.js",
+    "dev": "node esbuild.config.mjs dev",
+    "build": "node esbuild.config.mjs production",
     "release": "standard-version"
   },
   "license": "MIT",
@@ -14,12 +14,9 @@
     "t": ""
   },
   "devDependencies": {
-    "@rollup/plugin-commonjs": "^15.1.0",
-    "@rollup/plugin-node-resolve": "^9.0.0",
-    "@rollup/plugin-typescript": "^6.0.0",
     "@types/node": "^14.14.2",
     "obsidian": "^1.4.4",
-    "rollup": "^2.32.1",
+    "esbuild": "^0.18.10",
     "tslib": "^2.0.3",
     "typescript": "^5.1.6",
     "standard-version": "^9.0.0"
