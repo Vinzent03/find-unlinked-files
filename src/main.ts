@@ -176,7 +176,7 @@ export default class FindOrphanedFilesPlugin extends Plugin {
         const emptyFiles: TFile[] = [];
         for (const file of files) {
             if (
-                !new Utils(
+                new Utils(
                     this.app,
                     file.path,
                     [],
@@ -184,7 +184,7 @@ export default class FindOrphanedFilesPlugin extends Plugin {
                     this.settings.emptyFilesDirectories,
                     this.settings.emptyFilesFilesToIgnore,
                     this.settings.emptyFilesIgnoreDirectories
-                ).isValid()
+                ).shouldIgnoreFile()
             ) {
                 continue;
             }
@@ -353,7 +353,7 @@ export default class FindOrphanedFilesPlugin extends Plugin {
                 this.settings.unresolvedLinksFilesToIgnore,
                 this.settings.unresolvedLinksIgnoreDirectories
             );
-            if (!utils.isValid()) continue;
+            if (utils.shouldIgnoreFile()) continue;
 
             for (const link in brokenLinks[sourceFilepath]) {
                 const linkFileType = link.substring(link.lastIndexOf(".") + 1);
@@ -403,24 +403,23 @@ export default class FindOrphanedFilesPlugin extends Plugin {
         let outFile: TFile;
         const files = this.app.vault.getMarkdownFiles();
         let withoutFiles = files.filter((file) => {
-            if (
-                new Utils(
-                    this.app,
-                    file.path,
-                    [],
-                    [],
-                    this.settings.withoutTagsDirectoriesToIgnore,
-                    this.settings.withoutTagsFilesToIgnore,
-                    true
-                ).isValid()
-            ) {
-                return (
-                    (getAllTags(this.app.metadataCache.getFileCache(file))
-                        .length ?? 0) <= 0
-                );
-            } else {
+            const utils = new Utils(
+                this.app,
+                file.path,
+                [],
+                [],
+                this.settings.withoutTagsDirectoriesToIgnore,
+                this.settings.withoutTagsFilesToIgnore,
+                true
+            );
+
+            if (utils.shouldIgnoreFile()) {
                 return false;
             }
+            return (
+                (getAllTags(this.app.metadataCache.getFileCache(file))
+                    .length ?? 0) <= 0
+            );
         });
         withoutFiles.remove(outFile);
 
@@ -471,7 +470,7 @@ export default class FindOrphanedFilesPlugin extends Plugin {
             this.settings.ignoreDirectories,
             dir
         );
-        if (!utils.isValid()) return false;
+        if (utils.shouldIgnoreFile()) return false;
 
         return true;
     }
