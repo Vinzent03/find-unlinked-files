@@ -71,6 +71,32 @@ interface BrokenLink {
     files: string[];
 }
 
+interface CanvasFileContent {
+    nodes: CanvasNode[];
+    edges: CanvasEdge[];
+}
+
+interface CanvasNode {
+    id: string;
+    type: "file" | "group" | "text";
+    file?: string; // Path to the link, only present for "file" type nodes.
+    label?: string; // Only present for "group" type nodes.
+    text?: string; // Only present for "text" type nodes.
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+}
+
+interface CanvasEdge {
+    id: string
+    fromNode: string;
+    fromSide: string;
+    toNode: string;
+    toSide: string;
+    label?: string;
+}
+
 export default class FindOrphanedFilesPlugin extends Plugin {
     settings: Settings;
     findExtensionRegex = /(\.[^.]+)$/;
@@ -80,7 +106,7 @@ export default class FindOrphanedFilesPlugin extends Plugin {
         this.addCommand({
             id: "find-unlinked-files",
             name: "Find orphaned files",
-            callback: () => this.findOrphanedFiles(),
+            callback: async () => await this.findOrphanedFiles(),
         });
         this.addCommand({
             id: "find-unresolved-link",
@@ -216,13 +242,46 @@ export default class FindOrphanedFilesPlugin extends Plugin {
         );
     }
 
-    findOrphanedFiles(dir?: string) {
+    async findOrphanedFiles(dir?: string) {
         const outFileName = this.settings.outputFileName + ".md";
         let outFile: TFile | null = null;
         const allFiles = this.app.vault.getFiles();
         const markdownFiles = this.app.vault.getMarkdownFiles();
-        const links: string[] = [];
+        const canvasFiles = allFiles.filter(file => file.extension === 'canvas');
+        const links: Set<string> = new Set();
+        const findLinkInTextRegex = /\[\[(.*?)\]\]/g;
 
+        // get a list of all links within canvas files
+        const canvasParsingPromises = canvasFiles.map(async (canvasFile: TFile) => {
+            // Read the canvas file as JSON
+            const canvasFileContent: CanvasFileContent = JSON.parse(await this.app.vault.cachedRead(canvasFile));
+            // Get a list of all links within the canvas file
+            canvasFileContent.nodes.forEach((node: any) => {
+                let linkTexts: string[] = [];
+
+                if (node.type === 'file') {
+                    linkTexts.push(node.file);
+                } else if (node.type === 'text') {
+                    // There could be zero or more links in the text. Use a regex to extract all the text between "[[" and "]]"
+                    let match;
+                    while ((match = findLinkInTextRegex.exec(node.text)) !== null) {
+                        linkTexts.push(match[1]);
+                    }
+                } else {
+                    return; // Skip other types (e.g. "group")
+                }
+
+                linkTexts.forEach((linkText: string) => {
+                    const targetFile = this.app.metadataCache.getFirstLinkpathDest(
+                        getLinkpath(linkText),
+                        canvasFile.path
+                    );
+                    if (targetFile != null) links.add(targetFile.path);
+                });
+            });
+        });
+
+        // Get a list of all links within markdown files
         markdownFiles.forEach((mdFile: TFile) => {
             if (outFile === null && mdFile.path == outFileName) {
                 outFile = mdFile;
@@ -235,10 +294,14 @@ export default class FindOrphanedFilesPlugin extends Plugin {
                         getLinkpath(cb.link),
                         mdFile.path
                     );
-                    if (txt != null) links.push(txt.path);
+                    if (txt != null) links.add(txt.path);
                 }
             );
         });
+
+        console.log(`waiting for canvas parsing promises...`);
+        await Promise.all(canvasParsingPromises);
+        console.log(`done waiting. ${links.size} links found, isolating orphaned files...`);
         const notLinkedFiles = allFiles.filter((file) =>
             this.isFileAnOrphan(file, links, dir)
         );
@@ -443,8 +506,8 @@ export default class FindOrphanedFilesPlugin extends Plugin {
      * @param file file to check
      * @param links all links in the vault
      */
-    isFileAnOrphan(file: TFile, links: string[], dir: string): boolean {
-        if (links.contains(file.path)) return false;
+    isFileAnOrphan(file: TFile, links: Set<string>, dir: string): boolean {
+        if (links.has(file.path)) return false;
 
         //filetypes to ignore by default
         if (file.extension == "css") return false;
