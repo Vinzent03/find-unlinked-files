@@ -218,13 +218,13 @@ export default class FindOrphanedFilesPlugin extends Plugin {
 
     findOrphanedFiles(dir?: string) {
         const outFileName = this.settings.outputFileName + ".md";
-        let outFile: TFile;
+        let outFile: TFile | null = null;
         const files = this.app.vault.getFiles();
         const markdownFiles = this.app.vault.getMarkdownFiles();
         const links: string[] = [];
 
         markdownFiles.forEach((markFile: TFile) => {
-            if (markFile.path == outFileName) {
+            if (outFile === null && markFile.path == outFileName) {
                 outFile = markFile;
                 return;
             }
