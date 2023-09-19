@@ -223,17 +223,17 @@ export default class FindOrphanedFilesPlugin extends Plugin {
         const markdownFiles = this.app.vault.getMarkdownFiles();
         const links: string[] = [];
 
-        markdownFiles.forEach((markFile: TFile) => {
-            if (outFile === null && markFile.path == outFileName) {
-                outFile = markFile;
+        markdownFiles.forEach((mdFile: TFile) => {
+            if (outFile === null && mdFile.path == outFileName) {
+                outFile = mdFile;
                 return;
             }
             iterateCacheRefs(
-                this.app.metadataCache.getFileCache(markFile),
+                this.app.metadataCache.getFileCache(mdFile),
                 (cb) => {
                     const txt = this.app.metadataCache.getFirstLinkpathDest(
                         getLinkpath(cb.link),
-                        markFile.path
+                        mdFile.path
                     );
                     if (txt != null) links.push(txt.path);
                 }
