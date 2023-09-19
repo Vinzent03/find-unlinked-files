@@ -243,6 +243,7 @@ export default class FindOrphanedFilesPlugin extends Plugin {
     }
 
     async findOrphanedFiles(dir?: string) {
+        const startTime = Date.now();
         const outFileName = this.settings.outputFileName + ".md";
         let outFile: TFile | null = null;
         const allFiles = this.app.vault.getFiles();
@@ -290,18 +291,18 @@ export default class FindOrphanedFilesPlugin extends Plugin {
             iterateCacheRefs(
                 this.app.metadataCache.getFileCache(mdFile),
                 (cb) => {
-                    const txt = this.app.metadataCache.getFirstLinkpathDest(
+                    const targetFile = this.app.metadataCache.getFirstLinkpathDest(
                         getLinkpath(cb.link),
                         mdFile.path
                     );
-                    if (txt != null) links.add(txt.path);
+                    if (targetFile != null) links.add(targetFile.path);
                 }
             );
         });
 
-        console.log(`waiting for canvas parsing promises...`);
+        // Ensure the canvas files have all been parsed before continuing.
         await Promise.all(canvasParsingPromises);
-        console.log(`done waiting. ${links.size} links found, isolating orphaned files...`);
+
         const notLinkedFiles = allFiles.filter((file) =>
             this.isFileAnOrphan(file, links, dir)
         );
@@ -326,6 +327,11 @@ export default class FindOrphanedFilesPlugin extends Plugin {
             outFileName,
             text,
             this.settings.openOutputFile
+        );
+        const endTime = Date.now();
+        new Notice(
+            `Found ${notLinkedFiles.length} orphaned files in ${endTime -
+            startTime}ms`
         );
     }
     async deleteOrphanedFiles() {
