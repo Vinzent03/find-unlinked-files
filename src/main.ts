@@ -219,7 +219,7 @@ export default class FindOrphanedFilesPlugin extends Plugin {
     findOrphanedFiles(dir?: string) {
         const outFileName = this.settings.outputFileName + ".md";
         let outFile: TFile | null = null;
-        const files = this.app.vault.getFiles();
+        const allFiles = this.app.vault.getFiles();
         const markdownFiles = this.app.vault.getMarkdownFiles();
         const links: string[] = [];
 
@@ -239,7 +239,7 @@ export default class FindOrphanedFilesPlugin extends Plugin {
                 }
             );
         });
-        const notLinkedFiles = files.filter((file) =>
+        const notLinkedFiles = allFiles.filter((file) =>
             this.isValid(file, links, dir)
         );
         notLinkedFiles.remove(outFile);
