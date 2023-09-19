@@ -240,7 +240,7 @@ export default class FindOrphanedFilesPlugin extends Plugin {
             );
         });
         const notLinkedFiles = allFiles.filter((file) =>
-            this.isValid(file, links, dir)
+            this.isFileAnOrphan(file, links, dir)
         );
         notLinkedFiles.remove(outFile);
 
@@ -444,7 +444,7 @@ export default class FindOrphanedFilesPlugin extends Plugin {
      * @param file file to check
      * @param links all links in the vault
      */
-    isValid(file: TFile, links: string[], dir: string): boolean {
+    isFileAnOrphan(file: TFile, links: string[], dir: string): boolean {
         if (links.contains(file.path)) return false;
 
         //filetypes to ignore by default
