@@ -197,7 +197,11 @@ export default class FindOrphanedFilesPlugin extends Plugin {
             const frontmatter = cache?.frontmatter;
             if (frontmatter) {
                 const lines = content.trimRight().split("\n").length;
-                if ((cache.frontmatterPosition ?? frontmatter.position).end.line == lines - 1) {
+                if (
+                    (cache.frontmatterPosition ?? frontmatter.position).end
+                        .line ==
+                    lines - 1
+                ) {
                     emptyFiles.push(file);
                 }
             }
