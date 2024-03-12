@@ -10,7 +10,7 @@ export class DeleteFilesModal extends Modal {
     onOpen() {
         let { contentEl, titleEl } = this;
         titleEl.setText(
-            "Move " + this.filesToDelete.length + " files to system trash?",
+            "Move " + this.filesToDelete.length + " files to system trash?"
         );
         contentEl
             .createEl("button", { text: "Cancel" })

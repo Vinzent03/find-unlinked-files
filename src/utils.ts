@@ -27,7 +27,7 @@ export class Utils {
         private directoriesToIgnore: string[],
         private filesToIgnore: string[],
         private ignoreDirectories: boolean = true,
-        private dir?: string,
+        private dir?: string
     ) {
         this.fileCache = app.metadataCache.getCache(filePath);
     }
@@ -36,7 +36,7 @@ export class Utils {
         const tags = getAllTags(this.fileCache);
         return (
             tags?.find((tag) =>
-                this.tagsToIgnore.contains(tag.substring(1)),
+                this.tagsToIgnore.contains(tag.substring(1))
             ) !== undefined
         );
     }
@@ -51,7 +51,7 @@ export class Utils {
         return iterateCacheRefs(this.fileCache, (cb) => {
             const link = this.app.metadataCache.getFirstLinkpathDest(
                 cb.link,
-                this.filePath,
+                this.filePath
             )?.path;
             return this.linksToIgnore.contains(link);
         });
@@ -66,7 +66,7 @@ export class Utils {
 
         const contains =
             this.directoriesToIgnore.find(
-                (value) => value.length != 0 && this.filePath.startsWith(value),
+                (value) => value.length != 0 && this.filePath.startsWith(value)
             ) !== undefined;
         if (this.ignoreDirectories) {
             return contains;
@@ -98,7 +98,7 @@ export class Utils {
         app: App,
         outputFileName: string,
         text: string,
-        openFile: boolean,
+        openFile: boolean
     ) {
         await app.vault.adapter.write(outputFileName, text);
         if (!openFile) return;
