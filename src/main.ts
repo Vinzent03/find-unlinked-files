@@ -230,7 +230,7 @@ export default class FindOrphanedFilesPlugin extends Plugin {
             (file) => file.extension === "canvas"
         );
         const links: Set<string> = new Set();
-        const findLinkInTextRegex = /\[\[(.*?)\]\]/g;
+        const findLinkInTextRegex = /\[\[(.*?)\]\]|\[.*?\]\((.*?)\)/g;
 
         // get a list of all links within canvas files
         const canvasParsingPromises = canvasFiles.map(
@@ -240,7 +240,7 @@ export default class FindOrphanedFilesPlugin extends Plugin {
                     await this.app.vault.cachedRead(canvasFile)
                 );
                 // Get a list of all links within the canvas file
-                canvasFileContent.nodes.forEach((node: any) => {
+                canvasFileContent.nodes.forEach((node) => {
                     let linkTexts: string[] = [];
 
                     if (node.type === "file") {
@@ -252,7 +252,7 @@ export default class FindOrphanedFilesPlugin extends Plugin {
                             (match = findLinkInTextRegex.exec(node.text)) !==
                             null
                         ) {
-                            linkTexts.push(match[1]);
+                            linkTexts.push(match[1] ?? match[2]);
                         }
                     } else {
                         return; // Skip other types (e.g. "group")
@@ -261,7 +261,7 @@ export default class FindOrphanedFilesPlugin extends Plugin {
                     linkTexts.forEach((linkText: string) => {
                         const targetFile =
                             this.app.metadataCache.getFirstLinkpathDest(
-                                getLinkpath(linkText),
+                                linkText.split("|")[0].split("#")[0],
                                 canvasFile.path
                             );
                         if (targetFile != null) links.add(targetFile.path);
