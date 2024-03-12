@@ -1,7 +1,7 @@
 import {
     getAllTags,
     getLinkpath,
-    iterateCacheRefs,
+    iterateRefs,
     Notice,
     Plugin,
     TFile,
@@ -114,13 +114,13 @@ export default class FindOrphanedFilesPlugin extends Plugin {
         });
         this.addSettingTab(new SettingsTab(this.app, this, DEFAULT_SETTINGS));
 
-        this.app.workspace.on("file-menu", (menu, file, source, leaf) => {
+        this.app.workspace.on("file-menu", (menu, file, _, __) => {
             if (file instanceof TFolder) {
                 menu.addItem((cb) => {
                     cb.setIcon("search");
                     cb.setTitle("Find orphaned files");
                     // Add trailing slash to catch files named like the directory. See https://github.com/Vinzent03/find-unlinked-files/issues/24
-                    cb.onClick((e) => {
+                    cb.onClick((_) => {
                         this.findOrphanedFiles(file.path + "/");
                     });
                 });
@@ -232,16 +232,18 @@ export default class FindOrphanedFilesPlugin extends Plugin {
                 outFile = markFile;
                 return;
             }
-            iterateCacheRefs(
-                this.app.metadataCache.getFileCache(markFile),
-                (cb) => {
-                    const txt = this.app.metadataCache.getFirstLinkpathDest(
-                        getLinkpath(cb.link),
-                        markFile.path
-                    );
-                    if (txt != null) links.push(txt.path);
-                }
-            );
+            const cache = this.app.metadataCache.getFileCache(markFile);
+            for (const ref of [
+                ...(cache.embeds ?? []),
+                ...(cache.links ?? []),
+                ...(cache.frontmatterLinks ?? []),
+            ]) {
+                const txt = this.app.metadataCache.getFirstLinkpathDest(
+                    getLinkpath(ref.link),
+                    markFile.path
+                );
+                if (txt != null) links.push(txt.path);
+            }
         });
         const notLinkedFiles = files.filter((file) =>
             this.isValid(file, links, dir)
