@@ -89,7 +89,7 @@ interface CanvasNode {
 }
 
 interface CanvasEdge {
-    id: string
+    id: string;
     fromNode: string;
     fromSide: string;
     toNode: string;
@@ -157,16 +157,16 @@ export default class FindOrphanedFilesPlugin extends Plugin {
     async createFilesOfBrokenLinks() {
         if (
             !(await this.app.vault.adapter.exists(
-                this.settings.unresolvedLinksOutputFileName + ".md"
+                this.settings.unresolvedLinksOutputFileName + ".md",
             ))
         ) {
             new Notice(
-                "Can't find file - Please run the `Find broken files' command before"
+                "Can't find file - Please run the `Find broken files' command before",
             );
             return;
         }
         const links = this.app.metadataCache.getCache(
-            this.settings.unresolvedLinksOutputFileName + ".md"
+            this.settings.unresolvedLinksOutputFileName + ".md",
         )?.links;
         if (!links) {
             new Notice("No broken links found");
@@ -177,7 +177,7 @@ export default class FindOrphanedFilesPlugin extends Plugin {
         for (const link of links) {
             const file = this.app.metadataCache.getFirstLinkpathDest(
                 link.link,
-                "/"
+                "/",
             );
             if (file) continue;
             const foundType = this.findExtensionRegex.exec(link.link)?.[0];
@@ -209,7 +209,7 @@ export default class FindOrphanedFilesPlugin extends Plugin {
                     [],
                     this.settings.emptyFilesDirectories,
                     this.settings.emptyFilesFilesToIgnore,
-                    this.settings.emptyFilesIgnoreDirectories
+                    this.settings.emptyFilesIgnoreDirectories,
                 ).shouldIgnoreFile()
             ) {
                 continue;
@@ -223,7 +223,11 @@ export default class FindOrphanedFilesPlugin extends Plugin {
             const frontmatter = cache?.frontmatter;
             if (frontmatter) {
                 const lines = content.trimRight().split("\n").length;
-                if ((cache.frontmatterPosition ?? frontmatter.position).end.line == lines - 1) {
+                if (
+                    (cache.frontmatterPosition ?? frontmatter.position).end
+                        .line ==
+                    lines - 1
+                ) {
                     emptyFiles.push(file);
                 }
             }
@@ -238,7 +242,7 @@ export default class FindOrphanedFilesPlugin extends Plugin {
             this.app,
             this.settings.emptyFilesOutputFileName + ".md",
             text,
-            this.settings.openOutputFile
+            this.settings.openOutputFile,
         );
     }
 
@@ -248,39 +252,49 @@ export default class FindOrphanedFilesPlugin extends Plugin {
         let outFile: TFile | null = null;
         const allFiles = this.app.vault.getFiles();
         const markdownFiles = this.app.vault.getMarkdownFiles();
-        const canvasFiles = allFiles.filter(file => file.extension === 'canvas');
+        const canvasFiles = allFiles.filter(
+            (file) => file.extension === "canvas",
+        );
         const links: Set<string> = new Set();
         const findLinkInTextRegex = /\[\[(.*?)\]\]/g;
 
         // get a list of all links within canvas files
-        const canvasParsingPromises = canvasFiles.map(async (canvasFile: TFile) => {
-            // Read the canvas file as JSON
-            const canvasFileContent: CanvasFileContent = JSON.parse(await this.app.vault.cachedRead(canvasFile));
-            // Get a list of all links within the canvas file
-            canvasFileContent.nodes.forEach((node: any) => {
-                let linkTexts: string[] = [];
+        const canvasParsingPromises = canvasFiles.map(
+            async (canvasFile: TFile) => {
+                // Read the canvas file as JSON
+                const canvasFileContent: CanvasFileContent = JSON.parse(
+                    await this.app.vault.cachedRead(canvasFile),
+                );
+                // Get a list of all links within the canvas file
+                canvasFileContent.nodes.forEach((node: any) => {
+                    let linkTexts: string[] = [];
 
-                if (node.type === 'file') {
-                    linkTexts.push(node.file);
-                } else if (node.type === 'text') {
-                    // There could be zero or more links in the text. Use a regex to extract all the text between "[[" and "]]"
-                    let match;
-                    while ((match = findLinkInTextRegex.exec(node.text)) !== null) {
-                        linkTexts.push(match[1]);
+                    if (node.type === "file") {
+                        linkTexts.push(node.file);
+                    } else if (node.type === "text") {
+                        // There could be zero or more links in the text. Use a regex to extract all the text between "[[" and "]]"
+                        let match;
+                        while (
+                            (match = findLinkInTextRegex.exec(node.text)) !==
+                            null
+                        ) {
+                            linkTexts.push(match[1]);
+                        }
+                    } else {
+                        return; // Skip other types (e.g. "group")
                     }
-                } else {
-                    return; // Skip other types (e.g. "group")
-                }
 
-                linkTexts.forEach((linkText: string) => {
-                    const targetFile = this.app.metadataCache.getFirstLinkpathDest(
-                        getLinkpath(linkText),
-                        canvasFile.path
-                    );
-                    if (targetFile != null) links.add(targetFile.path);
+                    linkTexts.forEach((linkText: string) => {
+                        const targetFile =
+                            this.app.metadataCache.getFirstLinkpathDest(
+                                getLinkpath(linkText),
+                                canvasFile.path,
+                            );
+                        if (targetFile != null) links.add(targetFile.path);
+                    });
                 });
-            });
-        });
+            },
+        );
 
         // Get a list of all links within markdown files
         markdownFiles.forEach((mdFile: TFile) => {
@@ -291,12 +305,13 @@ export default class FindOrphanedFilesPlugin extends Plugin {
             iterateCacheRefs(
                 this.app.metadataCache.getFileCache(mdFile),
                 (cb) => {
-                    const targetFile = this.app.metadataCache.getFirstLinkpathDest(
-                        getLinkpath(cb.link),
-                        mdFile.path
-                    );
+                    const targetFile =
+                        this.app.metadataCache.getFirstLinkpathDest(
+                            getLinkpath(cb.link),
+                            mdFile.path,
+                        );
                     if (targetFile != null) links.add(targetFile.path);
-                }
+                },
             );
         });
 
@@ -304,7 +319,7 @@ export default class FindOrphanedFilesPlugin extends Plugin {
         await Promise.all(canvasParsingPromises);
 
         const notLinkedFiles = allFiles.filter((file) =>
-            this.isFileAnOrphan(file, links, dir)
+            this.isFileAnOrphan(file, links, dir),
         );
         notLinkedFiles.remove(outFile);
 
@@ -326,34 +341,35 @@ export default class FindOrphanedFilesPlugin extends Plugin {
             this.app,
             outFileName,
             text,
-            this.settings.openOutputFile
+            this.settings.openOutputFile,
         );
         const endTime = Date.now();
         new Notice(
-            `Found ${notLinkedFiles.length} orphaned files in ${endTime -
-            startTime}ms`
+            `Found ${notLinkedFiles.length} orphaned files in ${
+                endTime - startTime
+            }ms`,
         );
     }
     async deleteOrphanedFiles() {
         if (
             !(await this.app.vault.adapter.exists(
-                this.settings.outputFileName + ".md"
+                this.settings.outputFileName + ".md",
             ))
         ) {
             new Notice(
-                "Can't find file - Please run the `Find orphaned files' command before"
+                "Can't find file - Please run the `Find orphaned files' command before",
             );
             return;
         }
         const links =
             this.app.metadataCache.getCache(
-                this.settings.outputFileName + ".md"
+                this.settings.outputFileName + ".md",
             )?.links ?? [];
         const filesToDelete: TFile[] = [];
         links.forEach((link) => {
             const file = this.app.metadataCache.getFirstLinkpathDest(
                 link.link,
-                "/"
+                "/",
             );
             if (!file) return;
 
@@ -371,23 +387,23 @@ export default class FindOrphanedFilesPlugin extends Plugin {
     async deleteEmptyFiles() {
         if (
             !(await this.app.vault.adapter.exists(
-                this.settings.emptyFilesOutputFileName + ".md"
+                this.settings.emptyFilesOutputFileName + ".md",
             ))
         ) {
             new Notice(
-                "Can't find file - Please run the `Find orphaned files' command before"
+                "Can't find file - Please run the `Find orphaned files' command before",
             );
             return;
         }
         const links =
             this.app.metadataCache.getCache(
-                this.settings.emptyFilesOutputFileName + ".md"
+                this.settings.emptyFilesOutputFileName + ".md",
             )?.links ?? [];
         const filesToDelete: TFile[] = [];
         for (const link of links) {
             const file = this.app.metadataCache.getFirstLinkpathDest(
                 link.link,
-                "/"
+                "/",
             );
             if (!file) return;
 
@@ -410,7 +426,7 @@ export default class FindOrphanedFilesPlugin extends Plugin {
                 continue;
 
             const fileType = sourceFilepath.substring(
-                sourceFilepath.lastIndexOf(".") + 1
+                sourceFilepath.lastIndexOf(".") + 1,
             );
 
             const utils = new Utils(
@@ -420,7 +436,7 @@ export default class FindOrphanedFilesPlugin extends Plugin {
                 this.settings.unresolvedLinksLinksToIgnore,
                 this.settings.unresolvedLinksDirectoriesToIgnore,
                 this.settings.unresolvedLinksFilesToIgnore,
-                this.settings.unresolvedLinksIgnoreDirectories
+                this.settings.unresolvedLinksIgnoreDirectories,
             );
             if (utils.shouldIgnoreFile()) continue;
 
@@ -429,7 +445,7 @@ export default class FindOrphanedFilesPlugin extends Plugin {
 
                 if (
                     this.settings.unresolvedLinksFileTypesToIgnore.contains(
-                        linkFileType
+                        linkFileType,
                     )
                 )
                     continue;
@@ -438,7 +454,7 @@ export default class FindOrphanedFilesPlugin extends Plugin {
                 if (fileType == "md") {
                     formattedFilePath = sourceFilepath.substring(
                         0,
-                        sourceFilepath.lastIndexOf(".md")
+                        sourceFilepath.lastIndexOf(".md"),
                     );
                 }
                 const brokenLink: BrokenLink = {
@@ -460,10 +476,10 @@ export default class FindOrphanedFilesPlugin extends Plugin {
             [
                 "Don't forget that creating the file from here may create the file in the wrong directory!",
                 ...links.map(
-                    (e) => `- [[${e.link}]] in [[${e.files.join("]], [[")}]]`
+                    (e) => `- [[${e.link}]] in [[${e.files.join("]], [[")}]]`,
                 ),
             ].join("\n"),
-            this.settings.openOutputFile
+            this.settings.openOutputFile,
         );
     }
 
@@ -479,15 +495,15 @@ export default class FindOrphanedFilesPlugin extends Plugin {
                 [],
                 this.settings.withoutTagsDirectoriesToIgnore,
                 this.settings.withoutTagsFilesToIgnore,
-                true
+                true,
             );
 
             if (utils.shouldIgnoreFile()) {
                 return false;
             }
             return (
-                (getAllTags(this.app.metadataCache.getFileCache(file))
-                    .length ?? 0) <= 0
+                (getAllTags(this.app.metadataCache.getFileCache(file)).length ??
+                    0) <= 0
             );
         });
         withoutFiles.remove(outFile);
@@ -502,7 +518,7 @@ export default class FindOrphanedFilesPlugin extends Plugin {
             this.app,
             outFileName,
             text,
-            this.settings.openOutputFile
+            this.settings.openOutputFile,
         );
     }
 
@@ -520,7 +536,7 @@ export default class FindOrphanedFilesPlugin extends Plugin {
 
         if (this.settings.fileTypesToIgnore[0] !== "") {
             const containsFileType = this.settings.fileTypesToIgnore.contains(
-                file.extension
+                file.extension,
             );
             if (this.settings.ignoreFileTypes) {
                 if (containsFileType) return;
@@ -537,7 +553,7 @@ export default class FindOrphanedFilesPlugin extends Plugin {
             this.settings.directoriesToIgnore,
             this.settings.filesToIgnore,
             this.settings.ignoreDirectories,
-            dir
+            dir,
         );
         if (utils.shouldIgnoreFile()) return false;
 
