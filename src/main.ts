@@ -6,6 +6,7 @@ import {
     TFile,
     TFolder,
 } from "obsidian";
+import { CanvasData } from "obsidian/canvas";
 import { DeleteFilesModal } from "./deleteFilesModal";
 import { SettingsTab } from "./settingsTab";
 import { Utils } from "./utils";
@@ -70,32 +71,6 @@ interface BrokenLink {
     files: string[];
 }
 
-interface CanvasFileContent {
-    nodes: CanvasNode[];
-    edges: CanvasEdge[];
-}
-
-interface CanvasNode {
-    id: string;
-    type: "file" | "group" | "text";
-    file?: string; // Path to the link, only present for "file" type nodes.
-    label?: string; // Only present for "group" type nodes.
-    text?: string; // Only present for "text" type nodes.
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-}
-
-interface CanvasEdge {
-    id: string;
-    fromNode: string;
-    fromSide: string;
-    toNode: string;
-    toSide: string;
-    label?: string;
-}
-
 export default class FindOrphanedFilesPlugin extends Plugin {
     settings: Settings;
     findExtensionRegex = /(\.[^.]+)$/;
@@ -105,7 +80,7 @@ export default class FindOrphanedFilesPlugin extends Plugin {
         this.addCommand({
             id: "find-unlinked-files",
             name: "Find orphaned files",
-            callback: async () => await this.findOrphanedFiles(),
+            callback: () => this.findOrphanedFiles(),
         });
         this.addCommand({
             id: "find-unresolved-link",
@@ -261,7 +236,7 @@ export default class FindOrphanedFilesPlugin extends Plugin {
         const canvasParsingPromises = canvasFiles.map(
             async (canvasFile: TFile) => {
                 // Read the canvas file as JSON
-                const canvasFileContent: CanvasFileContent = JSON.parse(
+                const canvasFileContent: CanvasData = JSON.parse(
                     await this.app.vault.cachedRead(canvasFile)
                 );
                 // Get a list of all links within the canvas file
