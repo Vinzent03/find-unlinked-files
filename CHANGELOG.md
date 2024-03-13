@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.10.0](https://github.com/Vinzent03/find-unlinked-files/compare/1.9.1...1.10.0) (2024-03-13)
+
+
+### Features
+
+* Include canvas files when determining orphans ([#53](https://github.com/Vinzent03/find-unlinked-files/issues/53)) ([56900fe](https://github.com/Vinzent03/find-unlinked-files/commit/56900fe43f34a15405e629318eda563b64217db3))
+
+
+### Bug Fixes
+
+* respect frontmatter links ([bb1b21b](https://github.com/Vinzent03/find-unlinked-files/commit/bb1b21b7725b7bc3f8ad1cc2817fcfde9002f15e))
+
 ### [1.9.1](https://github.com/Vinzent03/find-unlinked-files/compare/1.9.0...1.9.1) (2023-08-24)
 
 
