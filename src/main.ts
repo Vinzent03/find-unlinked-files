@@ -319,11 +319,12 @@ export default class FindOrphanedFilesPlugin extends Plugin {
             this.settings.openOutputFile
         );
         const endTime = Date.now();
-        new Notice(
-            `Found ${notLinkedFiles.length} orphaned files in ${
-                endTime - startTime
-            }ms`
-        );
+        const diff = endTime - startTime;
+        if (diff > 1000) {
+            new Notice(
+                `Found ${notLinkedFiles.length} orphaned files in ${diff}ms`
+            );
+        }
     }
     async deleteOrphanedFiles() {
         if (
