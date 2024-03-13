@@ -79,12 +79,12 @@ export class Utils {
         return this.filesToIgnore.contains(this.filePath);
     }
 
-    public isValid() {
+    public shouldIgnoreFile() {
         return (
-            !this.hasTagsToIgnore() &&
-            !this.hasLinksToIgnore() &&
-            !this.checkDirectory() &&
-            !this.isFileToIgnore()
+            this.hasTagsToIgnore() ||
+            this.hasLinksToIgnore() ||
+            this.checkDirectory() ||
+            this.isFileToIgnore()
         );
     }
 

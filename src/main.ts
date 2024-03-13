@@ -1,12 +1,12 @@
 import {
     getAllTags,
     getLinkpath,
-    iterateRefs,
     Notice,
     Plugin,
     TFile,
     TFolder,
 } from "obsidian";
+import { CanvasData } from "obsidian/canvas";
 import { DeleteFilesModal } from "./deleteFilesModal";
 import { SettingsTab } from "./settingsTab";
 import { Utils } from "./utils";
@@ -176,7 +176,7 @@ export default class FindOrphanedFilesPlugin extends Plugin {
         const emptyFiles: TFile[] = [];
         for (const file of files) {
             if (
-                !new Utils(
+                new Utils(
                     this.app,
                     file.path,
                     [],
@@ -184,7 +184,7 @@ export default class FindOrphanedFilesPlugin extends Plugin {
                     this.settings.emptyFilesDirectories,
                     this.settings.emptyFilesFilesToIgnore,
                     this.settings.emptyFilesIgnoreDirectories
-                ).isValid()
+                ).shouldIgnoreFile()
             ) {
                 continue;
             }
@@ -220,19 +220,63 @@ export default class FindOrphanedFilesPlugin extends Plugin {
         );
     }
 
-    findOrphanedFiles(dir?: string) {
+    async findOrphanedFiles(dir?: string) {
+        const startTime = Date.now();
         const outFileName = this.settings.outputFileName + ".md";
-        let outFile: TFile;
-        const files = this.app.vault.getFiles();
+        let outFile: TFile | null = null;
+        const allFiles = this.app.vault.getFiles();
         const markdownFiles = this.app.vault.getMarkdownFiles();
-        const links: string[] = [];
+        const canvasFiles = allFiles.filter(
+            (file) => file.extension === "canvas"
+        );
+        const links: Set<string> = new Set();
+        const findLinkInTextRegex = /\[\[(.*?)\]\]|\[.*?\]\((.*?)\)/g;
 
-        markdownFiles.forEach((markFile: TFile) => {
-            if (markFile.path == outFileName) {
-                outFile = markFile;
+        // get a list of all links within canvas files
+        const canvasParsingPromises = canvasFiles.map(
+            async (canvasFile: TFile) => {
+                // Read the canvas file as JSON
+                const canvasFileContent: CanvasData = JSON.parse(
+                    await this.app.vault.cachedRead(canvasFile)
+                );
+                // Get a list of all links within the canvas file
+                canvasFileContent.nodes.forEach((node) => {
+                    let linkTexts: string[] = [];
+
+                    if (node.type === "file") {
+                        linkTexts.push(node.file);
+                    } else if (node.type === "text") {
+                        // There could be zero or more links in the text. Use a regex to extract all the text between "[[" and "]]"
+                        let match;
+                        while (
+                            (match = findLinkInTextRegex.exec(node.text)) !==
+                            null
+                        ) {
+                            linkTexts.push(match[1] ?? match[2]);
+                        }
+                    } else {
+                        return; // Skip other types (e.g. "group")
+                    }
+
+                    linkTexts.forEach((linkText: string) => {
+                        const targetFile =
+                            this.app.metadataCache.getFirstLinkpathDest(
+                                linkText.split("|")[0].split("#")[0],
+                                canvasFile.path
+                            );
+                        if (targetFile != null) links.add(targetFile.path);
+                    });
+                });
+            }
+        );
+
+        // Get a list of all links within markdown files
+        markdownFiles.forEach((mdFile: TFile) => {
+            if (outFile === null && mdFile.path == outFileName) {
+                outFile = mdFile;
                 return;
             }
-            const cache = this.app.metadataCache.getFileCache(markFile);
+            const cache = this.app.metadataCache.getFileCache(mdFile);
             for (const ref of [
                 ...(cache.embeds ?? []),
                 ...(cache.links ?? []),
@@ -240,13 +284,17 @@ export default class FindOrphanedFilesPlugin extends Plugin {
             ]) {
                 const txt = this.app.metadataCache.getFirstLinkpathDest(
                     getLinkpath(ref.link),
-                    markFile.path
+                    mdFile.path
                 );
-                if (txt != null) links.push(txt.path);
+                if (txt != null) links.add(txt.path);
             }
         });
-        const notLinkedFiles = files.filter((file) =>
-            this.isValid(file, links, dir)
+
+        // Ensure the canvas files have all been parsed before continuing.
+        await Promise.all(canvasParsingPromises);
+
+        const notLinkedFiles = allFiles.filter((file) =>
+            this.isFileAnOrphan(file, links, dir)
         );
         notLinkedFiles.remove(outFile);
 
@@ -270,6 +318,13 @@ export default class FindOrphanedFilesPlugin extends Plugin {
             text,
             this.settings.openOutputFile
         );
+        const endTime = Date.now();
+        const diff = endTime - startTime;
+        if (diff > 1000) {
+            new Notice(
+                `Found ${notLinkedFiles.length} orphaned files in ${diff}ms`
+            );
+        }
     }
     async deleteOrphanedFiles() {
         if (
@@ -359,7 +414,7 @@ export default class FindOrphanedFilesPlugin extends Plugin {
                 this.settings.unresolvedLinksFilesToIgnore,
                 this.settings.unresolvedLinksIgnoreDirectories
             );
-            if (!utils.isValid()) continue;
+            if (utils.shouldIgnoreFile()) continue;
 
             for (const link in brokenLinks[sourceFilepath]) {
                 const linkFileType = link.substring(link.lastIndexOf(".") + 1);
@@ -409,24 +464,23 @@ export default class FindOrphanedFilesPlugin extends Plugin {
         let outFile: TFile;
         const files = this.app.vault.getMarkdownFiles();
         let withoutFiles = files.filter((file) => {
-            if (
-                new Utils(
-                    this.app,
-                    file.path,
-                    [],
-                    [],
-                    this.settings.withoutTagsDirectoriesToIgnore,
-                    this.settings.withoutTagsFilesToIgnore,
-                    true
-                ).isValid()
-            ) {
-                return (
-                    (getAllTags(this.app.metadataCache.getFileCache(file))
-                        .length ?? 0) <= 0
-                );
-            } else {
+            const utils = new Utils(
+                this.app,
+                file.path,
+                [],
+                [],
+                this.settings.withoutTagsDirectoriesToIgnore,
+                this.settings.withoutTagsFilesToIgnore,
+                true
+            );
+
+            if (utils.shouldIgnoreFile()) {
                 return false;
             }
+            return (
+                (getAllTags(this.app.metadataCache.getFileCache(file)).length ??
+                    0) <= 0
+            );
         });
         withoutFiles.remove(outFile);
 
@@ -450,8 +504,8 @@ export default class FindOrphanedFilesPlugin extends Plugin {
      * @param file file to check
      * @param links all links in the vault
      */
-    isValid(file: TFile, links: string[], dir: string): boolean {
-        if (links.contains(file.path)) return false;
+    isFileAnOrphan(file: TFile, links: Set<string>, dir: string): boolean {
+        if (links.has(file.path)) return false;
 
         //filetypes to ignore by default
         if (file.extension == "css") return false;
@@ -477,7 +531,7 @@ export default class FindOrphanedFilesPlugin extends Plugin {
             this.settings.ignoreDirectories,
             dir
         );
-        if (!utils.isValid()) return false;
+        if (utils.shouldIgnoreFile()) return false;
 
         return true;
     }
