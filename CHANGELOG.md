@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.10.1](https://github.com/Vinzent03/find-unlinked-files/compare/1.10.0...1.10.1) (2024-08-12)
+
+
+### Bug Fixes
+
+* handle empty canvas file ([af44099](https://github.com/Vinzent03/find-unlinked-files/commit/af4409990682ebb7152cfa33d90befa1fe9715e9)), closes [#66](https://github.com/Vinzent03/find-unlinked-files/issues/66)
+
 ## [1.10.0](https://github.com/Vinzent03/find-unlinked-files/compare/1.9.1...1.10.0) (2024-03-13)
 
 
