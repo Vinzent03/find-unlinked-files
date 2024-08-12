@@ -237,10 +237,10 @@ export default class FindOrphanedFilesPlugin extends Plugin {
             async (canvasFile: TFile) => {
                 // Read the canvas file as JSON
                 const canvasFileContent: CanvasData = JSON.parse(
-                    await this.app.vault.cachedRead(canvasFile)
+                    (await this.app.vault.cachedRead(canvasFile)) || "{}"
                 );
                 // Get a list of all links within the canvas file
-                canvasFileContent.nodes.forEach((node) => {
+                canvasFileContent.nodes?.forEach((node) => {
                     let linkTexts: string[] = [];
 
                     if (node.type === "file") {
