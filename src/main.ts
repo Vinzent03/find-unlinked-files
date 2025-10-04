@@ -277,6 +277,8 @@ export default class FindOrphanedFilesPlugin extends Plugin {
                 return;
             }
             const cache = this.app.metadataCache.getFileCache(mdFile);
+            if (!cache)
+                return;
             for (const ref of [
                 ...(cache.embeds ?? []),
                 ...(cache.links ?? []),
