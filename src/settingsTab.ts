@@ -55,6 +55,21 @@ export class SettingsTab extends PluginSettingTab {
             );
 
         new Setting(containerEl)
+            .setName("Sort output by")
+            .setDesc("Choose the order of files in the generated output file")
+            .addDropdown((cb) =>
+                cb
+                    .addOption("size", "Size")
+                    .addOption("alphabetical", "Alphabetical")
+                    .setValue(this.plugin.settings.orphanedFilesSortOrder)
+                    .onChange((value) => {
+                        this.plugin.settings.orphanedFilesSortOrder =
+                            value as Settings["orphanedFilesSortOrder"];
+                        void this.plugin.saveSettings();
+                    })
+            );
+
+        new Setting(containerEl)
             .setName("Disable working links")
             .setDesc(
                 "Indent lines to disable the link and to clean up the graph view"

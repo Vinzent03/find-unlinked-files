@@ -29,6 +29,7 @@ Call the command `Find orphaned files` and the file `Find orphaned files plugin 
 - add files to ignore files with links to one of these files
 - add specific file types to ignore
 - change output file name
+- sort output by size or alphabetically
 
 ## Move files with certain extension in output file to system trash (extra command)
 Goes through every link in the output file. If the extension of the link is in the list (can be set in settings), it moves the file to system trash. Is useful to delete many unused media files.

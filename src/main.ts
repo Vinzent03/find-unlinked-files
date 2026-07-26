@@ -11,8 +11,11 @@ import { DeleteFilesModal } from "./deleteFilesModal";
 import { SettingsTab } from "./settingsTab";
 import { Utils } from "./utils";
 
+export type OrphanedFilesSortOrder = "alphabetical" | "size";
+
 export interface Settings {
     outputFileName: string;
+    orphanedFilesSortOrder: OrphanedFilesSortOrder;
     disableWorkingLinks: boolean;
     directoriesToIgnore: string[];
     filesToIgnore: string[];
@@ -40,6 +43,7 @@ export interface Settings {
 }
 const DEFAULT_SETTINGS: Settings = {
     outputFileName: "orphaned files output",
+    orphanedFilesSortOrder: "size",
     disableWorkingLinks: false,
     directoriesToIgnore: [],
     filesToIgnore: [],
@@ -306,7 +310,7 @@ export default class FindOrphanedFilesPlugin extends Plugin {
         if (this.settings.disableWorkingLinks) prefix = "	";
         else prefix = "";
 
-        notLinkedFiles.sort((a, b) => b.stat.size - a.stat.size);
+        this.sortOrphanedFiles(notLinkedFiles);
 
         notLinkedFiles.forEach((file) => {
             text +=
@@ -329,6 +333,33 @@ export default class FindOrphanedFilesPlugin extends Plugin {
             );
         }
     }
+
+    sortOrphanedFiles(files: TFile[]) {
+        if (this.settings.orphanedFilesSortOrder == "alphabetical") {
+            files.sort((a, b) => {
+                const aLinkText = this.app.metadataCache.fileToLinktext(
+                    a,
+                    "/",
+                    false
+                );
+                const bLinkText = this.app.metadataCache.fileToLinktext(
+                    b,
+                    "/",
+                    false
+                );
+                return (
+                    aLinkText.localeCompare(bLinkText, undefined, {
+                        sensitivity: "base",
+                        numeric: true,
+                    }) || a.path.localeCompare(b.path)
+                );
+            });
+            return;
+        }
+
+        files.sort((a, b) => b.stat.size - a.stat.size);
+    }
+
     async deleteOrphanedFiles() {
         if (
             !(await this.app.vault.adapter.exists(
