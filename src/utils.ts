@@ -7,7 +7,7 @@ import {
 } from "obsidian";
 
 export class Utils {
-    private fileCache: CachedMetadata;
+    private fileCache: CachedMetadata | null;
 
     /**
      * Checks for the given settings. Is used for `Find orphaned files` and `Find broken links`
@@ -33,6 +33,9 @@ export class Utils {
     }
 
     private hasTagsToIgnore(): boolean {
+        if (!this.fileCache) {
+            return false;
+        }
         const tags = getAllTags(this.fileCache);
         return (
             tags?.find((tag) =>
@@ -41,6 +44,9 @@ export class Utils {
         );
     }
     private hasLinksToIgnore(): boolean {
+        if (!this.fileCache) {
+            return false;
+        }
         if (
             (this.fileCache?.embeds != null || this.fileCache?.links != null) &&
             this.linksToIgnore[0] == "*"
@@ -53,7 +59,7 @@ export class Utils {
                 cb.link,
                 this.filePath
             )?.path;
-            return this.linksToIgnore.contains(link);
+            return link ? this.linksToIgnore.contains(link) : false;
         });
     }
 
@@ -115,16 +121,15 @@ export class Utils {
         if (!fileIsAlreadyOpened) {
             const newPane = app.workspace.getLeavesOfType("empty").length == 0;
             if (newPane) {
-                app.workspace.openLinkText(outputFileName, "/", true);
+                await app.workspace.openLinkText(outputFileName, "/", true);
             } else {
                 const file = app.vault.getAbstractFileByPath(outputFileName);
+                const emptyLeaf = app.workspace.getLeavesOfType("empty")[0];
 
-                if (file instanceof TFile) {
-                    await app.workspace
-                        .getLeavesOfType("empty")[0]
-                        .openFile(file);
+                if (file instanceof TFile && emptyLeaf) {
+                    await emptyLeaf.openFile(file);
                 } else {
-                    app.workspace.openLinkText(outputFileName, "/", true);
+                    await app.workspace.openLinkText(outputFileName, "/", true);
                 }
             }
         }

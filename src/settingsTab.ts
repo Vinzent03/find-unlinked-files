@@ -23,18 +23,15 @@ export class SettingsTab extends PluginSettingTab {
     display(): void {
         let { containerEl } = this;
         containerEl.empty();
-        containerEl.createEl("h2", { text: this.plugin.manifest.name });
 
-        containerEl.createEl("h4", {
-            text: "Settings for finding orphaned files",
-        });
+        new Setting(containerEl).setName("Find orphaned files").setHeading();
 
         new Setting(containerEl).setName("Open output file").addToggle((cb) =>
             cb
                 .setValue(this.plugin.settings.openOutputFile)
                 .onChange((value) => {
                     this.plugin.settings.openOutputFile = value;
-                    this.plugin.saveSettings();
+                    void this.plugin.saveSettings();
                 })
         );
 
@@ -52,7 +49,7 @@ export class SettingsTab extends PluginSettingTab {
                         } else {
                             this.plugin.settings.outputFileName = value;
                         }
-                        this.plugin.saveSettings();
+                        void this.plugin.saveSettings();
                     })
                     .setValue(this.plugin.settings.outputFileName)
             );
@@ -66,7 +63,7 @@ export class SettingsTab extends PluginSettingTab {
                 cb
                     .onChange((value) => {
                         this.plugin.settings.disableWorkingLinks = value;
-                        this.plugin.saveSettings();
+                        void this.plugin.saveSettings();
                     })
                     .setValue(this.plugin.settings.disableWorkingLinks)
             );
@@ -81,7 +78,7 @@ export class SettingsTab extends PluginSettingTab {
                     .setValue(this.plugin.settings.ignoreDirectories)
                     .onChange((value) => {
                         this.plugin.settings.ignoreDirectories = value;
-                        this.plugin.saveSettings();
+                        void this.plugin.saveSettings();
                     })
             );
 
@@ -100,7 +97,7 @@ export class SettingsTab extends PluginSettingTab {
                             .split("\n")
                             .map((value) => this.formatPath(value, true));
                         this.plugin.settings.directoriesToIgnore = paths;
-                        this.plugin.saveSettings();
+                        void this.plugin.saveSettings();
                     })
             );
         new Setting(containerEl)
@@ -116,7 +113,7 @@ export class SettingsTab extends PluginSettingTab {
                             .split("\n")
                             .map((value) => this.formatPath(value, false));
                         this.plugin.settings.filesToIgnore = paths;
-                        this.plugin.saveSettings();
+                        void this.plugin.saveSettings();
                     })
             );
         new Setting(containerEl)
@@ -134,7 +131,7 @@ export class SettingsTab extends PluginSettingTab {
                             .split("\n")
                             .map((value) => this.formatPath(value, false));
                         this.plugin.settings.linksToIgnore = paths;
-                        this.plugin.saveSettings();
+                        void this.plugin.saveSettings();
                     })
             );
         new Setting(containerEl)
@@ -147,7 +144,7 @@ export class SettingsTab extends PluginSettingTab {
                     .setValue(this.plugin.settings.ignoreFileTypes)
                     .onChange((value) => {
                         this.plugin.settings.ignoreFileTypes = value;
-                        this.plugin.saveSettings();
+                        void this.plugin.saveSettings();
                     })
             );
         new Setting(containerEl)
@@ -160,7 +157,7 @@ export class SettingsTab extends PluginSettingTab {
                     .onChange((value) => {
                         let extensions = value.trim().split(",");
                         this.plugin.settings.fileTypesToIgnore = extensions;
-                        this.plugin.saveSettings();
+                        void this.plugin.saveSettings();
                     })
             );
         new Setting(containerEl)
@@ -175,7 +172,7 @@ export class SettingsTab extends PluginSettingTab {
                     .onChange((value) => {
                         let tags = value.trim().split(",");
                         this.plugin.settings.tagsToIgnore = tags;
-                        this.plugin.saveSettings();
+                        void this.plugin.saveSettings();
                     })
             );
         new Setting(containerEl)
@@ -190,14 +187,12 @@ export class SettingsTab extends PluginSettingTab {
                     .onChange((value) => {
                         let extensions = value.trim().split(",");
                         this.plugin.settings.fileTypesToDelete = extensions;
-                        this.plugin.saveSettings();
+                        void this.plugin.saveSettings();
                     })
             );
 
         /// Settings for find brokenLinks
-        containerEl.createEl("h4", {
-            text: "Settings for finding broken links",
-        });
+        new Setting(containerEl).setName("Find broken links").setHeading();
 
         new Setting(containerEl)
             .setName("Output file name")
@@ -214,7 +209,7 @@ export class SettingsTab extends PluginSettingTab {
                             this.plugin.settings.unresolvedLinksOutputFileName =
                                 value;
                         }
-                        this.plugin.saveSettings();
+                        void this.plugin.saveSettings();
                     })
                     .setValue(
                         this.plugin.settings.unresolvedLinksOutputFileName
@@ -234,7 +229,7 @@ export class SettingsTab extends PluginSettingTab {
                     .onChange((value) => {
                         this.plugin.settings.unresolvedLinksIgnoreDirectories =
                             value;
-                        this.plugin.saveSettings();
+                        void this.plugin.saveSettings();
                     })
             );
 
@@ -256,7 +251,7 @@ export class SettingsTab extends PluginSettingTab {
                             .map((value) => this.formatPath(value, true));
                         this.plugin.settings.unresolvedLinksDirectoriesToIgnore =
                             paths;
-                        this.plugin.saveSettings();
+                        void this.plugin.saveSettings();
                     })
             );
 
@@ -280,7 +275,7 @@ export class SettingsTab extends PluginSettingTab {
                             .map((value) => this.formatPath(value, false));
                         this.plugin.settings.unresolvedLinksFilesToIgnore =
                             paths;
-                        this.plugin.saveSettings();
+                        void this.plugin.saveSettings();
                     })
             );
         new Setting(containerEl)
@@ -303,7 +298,7 @@ export class SettingsTab extends PluginSettingTab {
                             .map((value) => this.formatPath(value, false));
                         this.plugin.settings.unresolvedLinksLinksToIgnore =
                             paths;
-                        this.plugin.saveSettings();
+                        void this.plugin.saveSettings();
                     })
             );
         new Setting(containerEl)
@@ -323,7 +318,7 @@ export class SettingsTab extends PluginSettingTab {
                         let extensions = value.trim().split(",");
                         this.plugin.settings.unresolvedLinksFileTypesToIgnore =
                             extensions;
-                        this.plugin.saveSettings();
+                        void this.plugin.saveSettings();
                     })
             );
         new Setting(containerEl)
@@ -342,13 +337,13 @@ export class SettingsTab extends PluginSettingTab {
                     .onChange((value) => {
                         let tags = value.trim().split(",");
                         this.plugin.settings.unresolvedLinksTagsToIgnore = tags;
-                        this.plugin.saveSettings();
+                        void this.plugin.saveSettings();
                     })
             );
 
-        containerEl.createEl("h4", {
-            text: "Settings for finding files without tags",
-        });
+        new Setting(containerEl)
+            .setName("Find files without tags")
+            .setHeading();
 
         new Setting(containerEl)
             .setName("Output file name")
@@ -365,7 +360,7 @@ export class SettingsTab extends PluginSettingTab {
                             this.plugin.settings.withoutTagsOutputFileName =
                                 value;
                         }
-                        this.plugin.saveSettings();
+                        void this.plugin.saveSettings();
                     })
                     .setValue(this.plugin.settings.withoutTagsOutputFileName)
             );
@@ -387,7 +382,7 @@ export class SettingsTab extends PluginSettingTab {
                             .split("\n")
                             .map((value) => this.formatPath(value, false));
                         this.plugin.settings.withoutTagsFilesToIgnore = paths;
-                        this.plugin.saveSettings();
+                        void this.plugin.saveSettings();
                     })
             );
 
@@ -411,14 +406,12 @@ export class SettingsTab extends PluginSettingTab {
                             .map((value) => this.formatPath(value, true));
                         this.plugin.settings.withoutTagsDirectoriesToIgnore =
                             paths;
-                        this.plugin.saveSettings();
+                        void this.plugin.saveSettings();
                     })
             );
 
         /// Settings for empty files
-        containerEl.createEl("h4", {
-            text: "Settings for finding empty files",
-        });
+        new Setting(containerEl).setName("Find empty files").setHeading();
 
         new Setting(containerEl)
             .setName("Output file name")
@@ -435,7 +428,7 @@ export class SettingsTab extends PluginSettingTab {
                             this.plugin.settings.emptyFilesOutputFileName =
                                 value;
                         }
-                        this.plugin.saveSettings();
+                        void this.plugin.saveSettings();
                     })
                     .setValue(this.plugin.settings.emptyFilesOutputFileName)
             );
@@ -451,7 +444,7 @@ export class SettingsTab extends PluginSettingTab {
                     .onChange((value) => {
                         this.plugin.settings.emptyFilesIgnoreDirectories =
                             value;
-                        this.plugin.saveSettings();
+                        void this.plugin.saveSettings();
                     })
             );
 
@@ -470,7 +463,7 @@ export class SettingsTab extends PluginSettingTab {
                             .split("\n")
                             .map((value) => this.formatPath(value, true));
                         this.plugin.settings.emptyFilesDirectories = paths;
-                        this.plugin.saveSettings();
+                        void this.plugin.saveSettings();
                     })
             );
         new Setting(containerEl)
@@ -488,7 +481,7 @@ export class SettingsTab extends PluginSettingTab {
                             .split("\n")
                             .map((value) => this.formatPath(value, false));
                         this.plugin.settings.emptyFilesFilesToIgnore = paths;
-                        this.plugin.saveSettings();
+                        void this.plugin.saveSettings();
                     })
             );
 

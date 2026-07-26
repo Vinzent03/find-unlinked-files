@@ -22,12 +22,16 @@ export class DeleteFilesModal extends Modal {
                 cls: "mod-cta",
                 text: "Confirm",
             })
-            .addEventListener("click", async () => {
-                for (const file of this.filesToDelete) {
-                    await this.app.vault.trash(file, true);
-                }
-                this.close();
+            .addEventListener("click", () => {
+                void this.deleteFiles();
             });
+    }
+
+    private async deleteFiles() {
+        for (const file of this.filesToDelete) {
+            await this.app.fileManager.trashFile(file);
+        }
+        this.close();
     }
 
     onClose() {

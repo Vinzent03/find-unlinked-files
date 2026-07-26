@@ -3,11 +3,13 @@
   "version": "1.10.1",
   "description": "Find files that are not linked anywhere and would otherwise be lost in your vault. In other words: files with no backlinks.",
   "main": "main.js",
+  "type": "module",
   "scripts": {
-    "dev": "node esbuild.config.mjs dev",
-    "build": "node esbuild.config.mjs production",
+    "dev": "node esbuild.config.mjs",
+    "build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
     "release": "standard-version",
-    "format": "prettier src --write"
+    "format": "prettier src --write",
+    "lint": "eslint ."
   },
   "license": "MIT",
   "author": "Vinzent",
@@ -15,12 +17,18 @@
     "t": ""
   },
   "devDependencies": {
-    "@types/node": "^14.14.2",
-    "esbuild": "^0.18.10",
-    "obsidian": "^1.4.4",
+    "@eslint/js": "^9.39.4",
+    "@types/node": "^22.15.17",
+    "esbuild": "0.25.5",
+    "eslint": "^9.39.4",
+    "eslint-plugin-obsidianmd": "^0.4.0",
+    "globals": "^17.6.0",
+    "jiti": "^2.6.1",
+    "obsidian": "latest",
     "prettier": "^3.2.4",
     "standard-version": "^9.0.0",
     "tslib": "^2.0.3",
-    "typescript": "^5.1.6"
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.59.1"
   }
 }
