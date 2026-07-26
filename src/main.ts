@@ -384,7 +384,7 @@ export default class FindOrphanedFilesPlugin extends Plugin {
             if (!file) return;
 
             if (
-                this.settings.fileTypesToDelete[0] == "*" ||
+                this.settings.fileTypesToDelete.contains("*") ||
                 this.settings.fileTypesToDelete.contains(file.extension)
             ) {
                 filesToDelete.push(file);
@@ -549,7 +549,7 @@ export default class FindOrphanedFilesPlugin extends Plugin {
         //filetypes to ignore by default
         if (file.extension == "css") return false;
 
-        if (this.settings.fileTypesToIgnore[0] !== "") {
+        if (this.settings.fileTypesToIgnore.length > 0) {
             const containsFileType = this.settings.fileTypesToIgnore.contains(
                 file.extension
             );
@@ -580,6 +580,17 @@ export default class FindOrphanedFilesPlugin extends Plugin {
             ...DEFAULT_SETTINGS,
             ...loadedData,
         };
+
+        this.settings.fileTypesToIgnore = Utils.normalizeStringList(
+            this.settings.fileTypesToIgnore
+        );
+        this.settings.fileTypesToDelete = Utils.normalizeStringList(
+            this.settings.fileTypesToDelete
+        );
+        this.settings.unresolvedLinksFileTypesToIgnore =
+            Utils.normalizeStringList(
+                this.settings.unresolvedLinksFileTypesToIgnore
+            );
     }
 
     async saveSettings() {

@@ -9,6 +9,19 @@ import {
 export class Utils {
     private fileCache: CachedMetadata | null;
 
+    static splitCommaSeparatedList(value: string): string[] {
+        return value
+            .split(",")
+            .map((value) => value.trim())
+            .filter((value) => value.length > 0);
+    }
+
+    static normalizeStringList(values: string[]): string[] {
+        return values
+            .map((value) => value.trim())
+            .filter((value) => value.length > 0);
+    }
+
     /**
      * Checks for the given settings. Is used for `Find orphaned files` and `Find broken links`
      * @param app

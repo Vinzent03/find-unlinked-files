@@ -1,5 +1,6 @@
 import { App, normalizePath, PluginSettingTab, Setting } from "obsidian";
 import FindOrphanedFilesPlugin, { Settings } from "./main";
+import { Utils } from "./utils";
 
 export class SettingsTab extends PluginSettingTab {
     plugin: FindOrphanedFilesPlugin;
@@ -170,7 +171,7 @@ export class SettingsTab extends PluginSettingTab {
                     .setPlaceholder("docx,txt")
                     .setValue(this.plugin.settings.fileTypesToIgnore.join(","))
                     .onChange((value) => {
-                        let extensions = value.trim().split(",");
+                        let extensions = Utils.splitCommaSeparatedList(value);
                         this.plugin.settings.fileTypesToIgnore = extensions;
                         void this.plugin.saveSettings();
                     })
@@ -185,7 +186,7 @@ export class SettingsTab extends PluginSettingTab {
                     .setPlaceholder("todo,unfinished")
                     .setValue(this.plugin.settings.tagsToIgnore.join(","))
                     .onChange((value) => {
-                        let tags = value.trim().split(",");
+                        const tags = Utils.splitCommaSeparatedList(value);
                         this.plugin.settings.tagsToIgnore = tags;
                         void this.plugin.saveSettings();
                     })
@@ -200,7 +201,7 @@ export class SettingsTab extends PluginSettingTab {
                     .setPlaceholder("jpg,png")
                     .setValue(this.plugin.settings.fileTypesToDelete.join(","))
                     .onChange((value) => {
-                        let extensions = value.trim().split(",");
+                        const extensions = Utils.splitCommaSeparatedList(value);
                         this.plugin.settings.fileTypesToDelete = extensions;
                         void this.plugin.saveSettings();
                     })
@@ -330,7 +331,7 @@ export class SettingsTab extends PluginSettingTab {
                         )
                     )
                     .onChange((value) => {
-                        let extensions = value.trim().split(",");
+                        const extensions = Utils.splitCommaSeparatedList(value);
                         this.plugin.settings.unresolvedLinksFileTypesToIgnore =
                             extensions;
                         void this.plugin.saveSettings();
@@ -350,7 +351,7 @@ export class SettingsTab extends PluginSettingTab {
                         )
                     )
                     .onChange((value) => {
-                        let tags = value.trim().split(",");
+                        const tags = Utils.splitCommaSeparatedList(value);
                         this.plugin.settings.unresolvedLinksTagsToIgnore = tags;
                         void this.plugin.saveSettings();
                     })
