@@ -31,8 +31,10 @@ Call the command `Find orphaned files` and the file `Find orphaned files plugin 
 - change output file name
 - sort output by size or alphabetically
 
-## Move files with certain extension in output file to system trash (extra command)
-Goes through every link in the output file. If the extension of the link is in the list (can be set in settings), it moves the file to system trash. Is useful to delete many unused media files.
+## Move files with certain extension in output file to system trash or archive (extra commands)
+Goes through every link in the output file. If the extension of the link is in the corresponding delete or archive filetype list (can be set in settings), it moves the file to system trash or to the configured archive directory. This is useful to clean up many unused media files while still allowing you to preserve them in an archive folder.
+
+The archive command requires the configured archive directory to already exist and preserves the original path inside it.
 
 **Please note that the setting "Disable working links" needs to be disabled.**
 

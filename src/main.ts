@@ -1,12 +1,14 @@
 import {
     getAllTags,
     getLinkpath,
+    normalizePath,
     Notice,
     Plugin,
     TFile,
     TFolder,
 } from "obsidian";
 import { CanvasData } from "obsidian/canvas";
+import { ArchiveFilesModal } from "./archiveFilesModal";
 import { DeleteFilesModal } from "./deleteFilesModal";
 import { SettingsTab } from "./settingsTab";
 import { Utils } from "./utils";
@@ -23,6 +25,8 @@ export interface Settings {
     linksToIgnore: string[];
     tagsToIgnore: string[];
     fileTypesToDelete: string[];
+    fileTypesToArchive: string[];
+    archiveDirectory: string;
     ignoreFileTypes: boolean;
     ignoreDirectories: boolean;
     unresolvedLinksIgnoreDirectories: boolean;
@@ -51,6 +55,8 @@ const DEFAULT_SETTINGS: Settings = {
     linksToIgnore: [],
     tagsToIgnore: [],
     fileTypesToDelete: [],
+    fileTypesToArchive: [],
+    archiveDirectory: "",
     ignoreFileTypes: true,
     ignoreDirectories: true,
     unresolvedLinksIgnoreDirectories: true,
@@ -94,6 +100,11 @@ export default class FindOrphanedFilesPlugin extends Plugin {
             id: "delete-unlinked-files",
             name: "Delete orphaned files with certain extension. See README",
             callback: () => this.deleteOrphanedFiles(),
+        });
+        this.addCommand({
+            id: "archive-unlinked-files",
+            name: "Move orphaned files with certain extension to archive directory. See readme",
+            callback: () => this.archiveOrphanedFiles(),
         });
         this.addCommand({
             id: "create-files-of-broken-links",
@@ -361,6 +372,47 @@ export default class FindOrphanedFilesPlugin extends Plugin {
     }
 
     async deleteOrphanedFiles() {
+        const filesToDelete = await this.getOrphanedFilesFromOutput(
+            this.settings.fileTypesToDelete
+        );
+        if (filesToDelete.length > 0)
+            new DeleteFilesModal(this.app, filesToDelete).open();
+    }
+
+    async archiveOrphanedFiles() {
+        const archiveDirectory = normalizePath(this.settings.archiveDirectory);
+        if (!archiveDirectory) {
+            new Notice(
+                "Please set an archive directory in the plugin settings"
+            );
+            return;
+        }
+
+        const existingFile =
+            this.app.vault.getAbstractFileByPath(archiveDirectory);
+        if (existingFile instanceof TFile) {
+            new Notice("Archive directory points to a file");
+            return;
+        }
+        if (!(existingFile instanceof TFolder)) {
+            new Notice("Archive directory does not exist");
+            return;
+        }
+
+        const filesToArchive = await this.getOrphanedFilesFromOutput(
+            this.settings.fileTypesToArchive
+        );
+        if (filesToArchive.length > 0)
+            new ArchiveFilesModal(
+                this.app,
+                filesToArchive,
+                archiveDirectory
+            ).open();
+    }
+
+    private async getOrphanedFilesFromOutput(
+        fileTypes: string[]
+    ): Promise<TFile[]> {
         if (
             !(await this.app.vault.adapter.exists(
                 this.settings.outputFileName + ".md"
@@ -369,13 +421,13 @@ export default class FindOrphanedFilesPlugin extends Plugin {
             new Notice(
                 "Can't find file - Please run the `Find orphaned files' command before"
             );
-            return;
+            return [];
         }
         const links =
             this.app.metadataCache.getCache(
                 this.settings.outputFileName + ".md"
             )?.links ?? [];
-        const filesToDelete: TFile[] = [];
+        const files: TFile[] = [];
         links.forEach((link) => {
             const file = this.app.metadataCache.getFirstLinkpathDest(
                 link.link,
@@ -383,15 +435,11 @@ export default class FindOrphanedFilesPlugin extends Plugin {
             );
             if (!file) return;
 
-            if (
-                this.settings.fileTypesToDelete.contains("*") ||
-                this.settings.fileTypesToDelete.contains(file.extension)
-            ) {
-                filesToDelete.push(file);
+            if (fileTypes.contains("*") || fileTypes.contains(file.extension)) {
+                files.push(file);
             }
         });
-        if (filesToDelete.length > 0)
-            new DeleteFilesModal(this.app, filesToDelete).open();
+        return files;
     }
 
     async deleteEmptyFiles() {
@@ -586,6 +634,9 @@ export default class FindOrphanedFilesPlugin extends Plugin {
         );
         this.settings.fileTypesToDelete = Utils.normalizeStringList(
             this.settings.fileTypesToDelete
+        );
+        this.settings.fileTypesToArchive = Utils.normalizeStringList(
+            this.settings.fileTypesToArchive
         );
         this.settings.unresolvedLinksFileTypesToIgnore =
             Utils.normalizeStringList(

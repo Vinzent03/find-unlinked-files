@@ -207,6 +207,40 @@ export class SettingsTab extends PluginSettingTab {
                     })
             );
 
+        new Setting(containerEl)
+            .setName("Filetypes to archive per command. See README.")
+            .setDesc(
+                "Add each filetype separated by comma. Set to `*` to archive all files."
+            )
+            .addTextArea((cb) =>
+                cb
+                    .setPlaceholder("jpg,png")
+                    .setValue(this.plugin.settings.fileTypesToArchive.join(","))
+                    .onChange((value) => {
+                        const extensions = Utils.splitCommaSeparatedList(value);
+                        this.plugin.settings.fileTypesToArchive = extensions;
+                        void this.plugin.saveSettings();
+                    })
+            );
+
+        new Setting(containerEl)
+            .setName("Archive directory")
+            .setDesc(
+                "Existing directory where the archive command moves orphaned files. Original paths are preserved inside this directory."
+            )
+            .addText((cb) =>
+                cb
+                    .setPlaceholder("Archive")
+                    .setValue(this.plugin.settings.archiveDirectory)
+                    .onChange((value) => {
+                        this.plugin.settings.archiveDirectory = this.formatPath(
+                            value.trim(),
+                            false
+                        );
+                        void this.plugin.saveSettings();
+                    })
+            );
+
         /// Settings for find brokenLinks
         new Setting(containerEl).setName("Find broken links").setHeading();
 
