@@ -1,6 +1,15 @@
-# Find orphaned files (files with no backlinks) and broken links
+# Find orphaned files and broken links
 
 A Plugin for [Obsidian](https://obsidian.md)
+
+## Features
+
+-   Find orphaned files (files with no backlinks)
+-   Find broken links (links to files that do not exist)
+-   Find empty files (files with no content)
+-   Find empty folders (folders with no files)
+-   Delete orphaned files, empty files and empty folders
+-   Archive orphaned files
 
 ## How does it work?
 
