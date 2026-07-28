@@ -6,5 +6,6 @@
   "author": "Vinzent",
   "fundingUrl": "https://ko-fi.com/vinzent",
   "authorUrl": "https://github.com/Vinzent03",
+  "minAppVersion": "1.6.6",
   "isDesktopOnly": false
 }
