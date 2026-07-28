@@ -43,6 +43,9 @@ export interface Settings {
     emptyFilesDirectories: string[];
     emptyFilesFilesToIgnore: string[];
     emptyFilesIgnoreDirectories: boolean;
+    emptyFoldersOutputFileName: string;
+    emptyFoldersDirectories: string[];
+    emptyFoldersIgnoreDirectories: boolean;
     openOutputFile: boolean;
 }
 const DEFAULT_SETTINGS: Settings = {
@@ -73,6 +76,9 @@ const DEFAULT_SETTINGS: Settings = {
     emptyFilesDirectories: [],
     emptyFilesFilesToIgnore: [],
     emptyFilesIgnoreDirectories: true,
+    emptyFoldersOutputFileName: "empty folders",
+    emptyFoldersDirectories: [],
+    emptyFoldersIgnoreDirectories: true,
     openOutputFile: true,
 };
 
@@ -125,6 +131,16 @@ export default class FindOrphanedFilesPlugin extends Plugin {
             id: "delete-empty-files",
             name: "Delete empty files",
             callback: () => this.deleteEmptyFiles(),
+        });
+        this.addCommand({
+            id: "find-empty-folders",
+            name: "Find empty folders",
+            callback: () => this.findEmptyFolders(),
+        });
+        this.addCommand({
+            id: "delete-empty-folders",
+            name: "Delete empty folders",
+            callback: () => this.deleteEmptyFolders(),
         });
         this.addSettingTab(new SettingsTab(this.app, this, DEFAULT_SETTINGS));
 
@@ -225,6 +241,35 @@ export default class FindOrphanedFilesPlugin extends Plugin {
         await Utils.writeAndOpenFile(
             this.app,
             this.settings.emptyFilesOutputFileName + ".md",
+            text,
+            this.settings.openOutputFile
+        );
+    }
+
+    async findEmptyFolders() {
+        const emptyFolders = this.app.vault.getAllLoadedFiles().filter(
+            (file): file is TFolder =>
+                file instanceof TFolder &&
+                file.children.length === 0 &&
+                !new Utils(
+                    this.app,
+                    // Directory settings include a trailing slash. Add one
+                    // here so the folder itself is matched as well.
+                    file.path + "/",
+                    [],
+                    [],
+                    this.settings.emptyFoldersDirectories,
+                    [],
+                    this.settings.emptyFoldersIgnoreDirectories
+                ).shouldIgnoreFile()
+        );
+        const prefix = this.settings.disableWorkingLinks ? "\t" : "";
+        const text = emptyFolders
+            .map((folder) => `${prefix}- [[${folder.path}]]`)
+            .join("\n");
+        await Utils.writeAndOpenFile(
+            this.app,
+            this.settings.emptyFoldersOutputFileName + ".md",
             text,
             this.settings.openOutputFile
         );
@@ -469,6 +514,29 @@ export default class FindOrphanedFilesPlugin extends Plugin {
         }
         if (filesToDelete.length > 0)
             new DeleteFilesModal(this.app, filesToDelete).open();
+    }
+
+    async deleteEmptyFolders() {
+        const outputFileName = this.settings.emptyFoldersOutputFileName + ".md";
+        if (!(await this.app.vault.adapter.exists(outputFileName))) {
+            new Notice(
+                "Can't find file - Please run the `Find empty folders' command before"
+            );
+            return;
+        }
+
+        const links =
+            this.app.metadataCache.getCache(outputFileName)?.links ?? [];
+        const foldersToDelete = [...new Set(links.map((link) => link.link))]
+            .map((path) => this.app.vault.getAbstractFileByPath(path))
+            .filter(
+                (file): file is TFolder =>
+                    file instanceof TFolder && file.children.length === 0
+            );
+
+        if (foldersToDelete.length > 0) {
+            new DeleteFilesModal(this.app, foldersToDelete, "folders").open();
+        }
     }
 
     async findBrokenLinks() {

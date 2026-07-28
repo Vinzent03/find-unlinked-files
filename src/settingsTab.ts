@@ -535,6 +535,61 @@ export class SettingsTab extends PluginSettingTab {
                     })
             );
 
+        new Setting(containerEl).setName("Find empty folders").setHeading();
+
+        new Setting(containerEl)
+            .setName("Output file name")
+            .setDesc(
+                "Set name of output file (without file extension). Make sure no file exists with this name because it will be overwritten! If the name is empty, the default name is set."
+            )
+            .addText((cb) =>
+                cb
+                    .onChange((value) => {
+                        this.plugin.settings.emptyFoldersOutputFileName =
+                            value.length === 0
+                                ? this.defaultSettings
+                                      .emptyFoldersOutputFileName
+                                : value;
+                        void this.plugin.saveSettings();
+                    })
+                    .setValue(this.plugin.settings.emptyFoldersOutputFileName)
+            );
+
+        new Setting(containerEl)
+            .setName("Exclude folders in the given directories")
+            .setDesc(
+                "Enable to exclude folders in the given directories. Disable to only include folders in the given directories"
+            )
+            .addToggle((cb) =>
+                cb
+                    .setValue(
+                        this.plugin.settings.emptyFoldersIgnoreDirectories
+                    )
+                    .onChange((value) => {
+                        this.plugin.settings.emptyFoldersIgnoreDirectories =
+                            value;
+                        void this.plugin.saveSettings();
+                    })
+            );
+
+        new Setting(containerEl)
+            .setName("Directories")
+            .setDesc("Add each directory path in a new line")
+            .addTextArea((cb) =>
+                cb
+                    .setPlaceholder("Directory/Subdirectory")
+                    .setValue(
+                        this.plugin.settings.emptyFoldersDirectories.join("\n")
+                    )
+                    .onChange((value) => {
+                        this.plugin.settings.emptyFoldersDirectories = value
+                            .trim()
+                            .split("\n")
+                            .map((path) => this.formatPath(path, true));
+                        void this.plugin.saveSettings();
+                    })
+            );
+
         new Setting(containerEl)
             .setName("Donate")
             .setDesc(
