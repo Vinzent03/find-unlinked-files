@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.11.0](https://github.com/Vinzent03/find-unlinked-files/compare/1.10.1...1.11.0) (2026-07-28)
+
+
+### Features
+
+* archive orphaned files ([ad67986](https://github.com/Vinzent03/find-unlinked-files/commit/ad67986bdd84c0c949916be752d73be9f36e4f96)), closes [#74](https://github.com/Vinzent03/find-unlinked-files/issues/74)
+* find empty folders ([1440504](https://github.com/Vinzent03/find-unlinked-files/commit/14405044fd35cee4bcb01d91e037c097ac2e5523)), closes [#63](https://github.com/Vinzent03/find-unlinked-files/issues/63)
+* sort output files alphabetical ([321423a](https://github.com/Vinzent03/find-unlinked-files/commit/321423a16d20ce3f3ac25be334213b23f430d3d2)), closes [#73](https://github.com/Vinzent03/find-unlinked-files/issues/73)
+
+
+### Bug Fixes
+
+* handle links in frontmatter as well ([eba8e0c](https://github.com/Vinzent03/find-unlinked-files/commit/eba8e0c8f0c6bddb6e85c82707bbd9578517f11e))
+* normalize comma separated values with space ([0feea42](https://github.com/Vinzent03/find-unlinked-files/commit/0feea428900be671648e4a3e5e06945126c72373)), closes [#56](https://github.com/Vinzent03/find-unlinked-files/issues/56)
+
 ### [1.10.1](https://github.com/Vinzent03/find-unlinked-files/compare/1.10.0...1.10.1) (2024-08-12)
 
 
