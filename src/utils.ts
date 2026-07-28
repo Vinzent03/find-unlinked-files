@@ -1,10 +1,4 @@
-import {
-    App,
-    CachedMetadata,
-    getAllTags,
-    iterateCacheRefs,
-    TFile,
-} from "obsidian";
+import { App, CachedMetadata, getAllTags, iterateRefs, TFile } from "obsidian";
 
 export class Utils {
     private fileCache: CachedMetadata | null;
@@ -67,7 +61,13 @@ export class Utils {
             return true;
         }
 
-        return iterateCacheRefs(this.fileCache, (cb) => {
+        const allLinks = [
+            ...(this.fileCache.embeds ?? []),
+            ...(this.fileCache.links ?? []),
+            ...(this.fileCache.frontmatterLinks ?? []),
+        ];
+
+        return iterateRefs(allLinks, (cb) => {
             const link = this.app.metadataCache.getFirstLinkpathDest(
                 cb.link,
                 this.filePath
