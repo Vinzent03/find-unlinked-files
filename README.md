@@ -10,6 +10,7 @@ A Plugin for [Obsidian](https://obsidian.md)
 -   Find empty folders (folders with no files)
 -   Delete orphaned files, empty files and empty folders
 -   Archive orphaned files
+-   Run all checks at once and get a single report
 
 ## How does it work?
 
@@ -34,6 +35,10 @@ Creates a file with a list of empty files. Files with just frontmatter are consi
 Creates a file with a list of empty folders. Use the `Delete empty folders` command to move the listed folders to the system trash after confirmation. Folders that are no longer empty are left untouched.
 
 Note that hidden files and folders (starting with a dot) are ignored. So folders containing only hidden files are considered empty as well.
+
+### Run all checks
+
+Runs `Find orphaned files`, `Find broken links`, `Find empty files` and `Find empty folders` at once and creates a single report with one section per check. Each check uses its own settings. Checks can be excluded from the report in the settings.
 
 ## How to use
 

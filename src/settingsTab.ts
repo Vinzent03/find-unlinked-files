@@ -590,6 +590,87 @@ export class SettingsTab extends PluginSettingTab {
                     })
             );
 
+        /// Settings for run all checks
+        new Setting(containerEl).setName("Run all checks").setHeading();
+
+        new Setting(containerEl)
+            .setName("Output file name")
+            .setDesc(
+                "Set name of output file (without file extension). Make sure no file exists with this name because it will be overwritten! If the name is empty, the default name is set."
+            )
+            .addText((cb) =>
+                cb
+                    .onChange((value) => {
+                        this.plugin.settings.allChecksOutputFileName =
+                            value.length === 0
+                                ? this.defaultSettings.allChecksOutputFileName
+                                : value;
+                        void this.plugin.saveSettings();
+                    })
+                    .setValue(this.plugin.settings.allChecksOutputFileName)
+            );
+
+        new Setting(containerEl)
+            .setName("Include orphaned files")
+            .setDesc(
+                "Uses the settings of the `Find orphaned files` section above"
+            )
+            .addToggle((cb) =>
+                cb
+                    .setValue(
+                        this.plugin.settings.allChecksIncludeOrphanedFiles
+                    )
+                    .onChange((value) => {
+                        this.plugin.settings.allChecksIncludeOrphanedFiles =
+                            value;
+                        void this.plugin.saveSettings();
+                    })
+            );
+
+        new Setting(containerEl)
+            .setName("Include broken links")
+            .setDesc(
+                "Uses the settings of the `Find broken links` section above"
+            )
+            .addToggle((cb) =>
+                cb
+                    .setValue(this.plugin.settings.allChecksIncludeBrokenLinks)
+                    .onChange((value) => {
+                        this.plugin.settings.allChecksIncludeBrokenLinks =
+                            value;
+                        void this.plugin.saveSettings();
+                    })
+            );
+
+        new Setting(containerEl)
+            .setName("Include empty files")
+            .setDesc(
+                "Uses the settings of the `Find empty files` section above"
+            )
+            .addToggle((cb) =>
+                cb
+                    .setValue(this.plugin.settings.allChecksIncludeEmptyFiles)
+                    .onChange((value) => {
+                        this.plugin.settings.allChecksIncludeEmptyFiles = value;
+                        void this.plugin.saveSettings();
+                    })
+            );
+
+        new Setting(containerEl)
+            .setName("Include empty folders")
+            .setDesc(
+                "Uses the settings of the `Find empty folders` section above"
+            )
+            .addToggle((cb) =>
+                cb
+                    .setValue(this.plugin.settings.allChecksIncludeEmptyFolders)
+                    .onChange((value) => {
+                        this.plugin.settings.allChecksIncludeEmptyFolders =
+                            value;
+                        void this.plugin.saveSettings();
+                    })
+            );
+
         new Setting(containerEl)
             .setName("Donate")
             .setDesc(

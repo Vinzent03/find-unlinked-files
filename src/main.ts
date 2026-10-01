@@ -4,6 +4,7 @@ import {
     normalizePath,
     Notice,
     Plugin,
+    TAbstractFile,
     TFile,
     TFolder,
 } from "obsidian";
@@ -46,6 +47,11 @@ export interface Settings {
     emptyFoldersOutputFileName: string;
     emptyFoldersDirectories: string[];
     emptyFoldersIgnoreDirectories: boolean;
+    allChecksOutputFileName: string;
+    allChecksIncludeOrphanedFiles: boolean;
+    allChecksIncludeBrokenLinks: boolean;
+    allChecksIncludeEmptyFiles: boolean;
+    allChecksIncludeEmptyFolders: boolean;
     openOutputFile: boolean;
 }
 const DEFAULT_SETTINGS: Settings = {
@@ -79,6 +85,11 @@ const DEFAULT_SETTINGS: Settings = {
     emptyFoldersOutputFileName: "empty folders",
     emptyFoldersDirectories: [],
     emptyFoldersIgnoreDirectories: true,
+    allChecksOutputFileName: "all checks output",
+    allChecksIncludeOrphanedFiles: true,
+    allChecksIncludeBrokenLinks: true,
+    allChecksIncludeEmptyFiles: true,
+    allChecksIncludeEmptyFolders: true,
     openOutputFile: true,
 };
 
@@ -142,6 +153,11 @@ export default class FindOrphanedFilesPlugin extends Plugin {
             name: "Delete empty folders",
             callback: () => this.deleteEmptyFolders(),
         });
+        this.addCommand({
+            id: "run-all-checks",
+            name: "Run all checks",
+            callback: () => this.runAllChecks(),
+        });
         this.addSettingTab(new SettingsTab(this.app, this, DEFAULT_SETTINGS));
 
         this.app.workspace.on("file-menu", (menu, file, _, __) => {
@@ -202,6 +218,15 @@ export default class FindOrphanedFilesPlugin extends Plugin {
     }
 
     async findEmptyFiles() {
+        await Utils.writeAndOpenFile(
+            this.app,
+            this.settings.emptyFilesOutputFileName + ".md",
+            this.formatFileList(await this.getEmptyFiles()),
+            this.settings.openOutputFile
+        );
+    }
+
+    async getEmptyFiles(): Promise<TFile[]> {
         const files = this.app.vault.getFiles();
         const emptyFiles: TFile[] = [];
         for (const file of files) {
@@ -232,22 +257,20 @@ export default class FindOrphanedFilesPlugin extends Plugin {
                 }
             }
         }
-        let prefix: string;
-        if (this.settings.disableWorkingLinks) prefix = "	";
-        else prefix = "";
-        const text = emptyFiles
-            .map((file) => `${prefix}- [[${file.path}]]`)
-            .join("\n");
+        return emptyFiles;
+    }
+
+    async findEmptyFolders() {
         await Utils.writeAndOpenFile(
             this.app,
-            this.settings.emptyFilesOutputFileName + ".md",
-            text,
+            this.settings.emptyFoldersOutputFileName + ".md",
+            this.formatFileList(this.getEmptyFolders()),
             this.settings.openOutputFile
         );
     }
 
-    async findEmptyFolders() {
-        const emptyFolders = this.app.vault.getAllLoadedFiles().filter(
+    getEmptyFolders(): TFolder[] {
+        return this.app.vault.getAllLoadedFiles().filter(
             (file): file is TFolder =>
                 file instanceof TFolder &&
                 file.children.length === 0 &&
@@ -263,22 +286,38 @@ export default class FindOrphanedFilesPlugin extends Plugin {
                     this.settings.emptyFoldersIgnoreDirectories
                 ).shouldIgnoreFile()
         );
+    }
+
+    formatFileList(files: TAbstractFile[]): string {
         const prefix = this.settings.disableWorkingLinks ? "\t" : "";
-        const text = emptyFolders
-            .map((folder) => `${prefix}- [[${folder.path}]]`)
-            .join("\n");
-        await Utils.writeAndOpenFile(
-            this.app,
-            this.settings.emptyFoldersOutputFileName + ".md",
-            text,
-            this.settings.openOutputFile
-        );
+        return files.map((file) => `${prefix}- [[${file.path}]]`).join("\n");
     }
 
     async findOrphanedFiles(dir?: string) {
         const startTime = Date.now();
-        const outFileName = this.settings.outputFileName + ".md";
-        let outFile: TFile | null = null;
+        const notLinkedFiles = await this.getOrphanedFiles(dir);
+        await Utils.writeAndOpenFile(
+            this.app,
+            this.settings.outputFileName + ".md",
+            this.formatOrphanedFiles(notLinkedFiles),
+            this.settings.openOutputFile
+        );
+        const endTime = Date.now();
+        const diff = endTime - startTime;
+        if (diff > 1000) {
+            new Notice(
+                `Found ${notLinkedFiles.length} orphaned files in ${diff}ms`
+            );
+        }
+    }
+
+    async getOrphanedFiles(dir?: string): Promise<TFile[]> {
+        // The report of `Run all checks` links to the orphaned files as well,
+        // so it must not count as a backlink either.
+        const outFileNames = [
+            this.settings.outputFileName + ".md",
+            this.settings.allChecksOutputFileName + ".md",
+        ];
         const allFiles = this.app.vault.getFiles();
         const markdownFiles = this.app.vault.getMarkdownFiles();
         const canvasFiles = allFiles.filter(
@@ -330,10 +369,7 @@ export default class FindOrphanedFilesPlugin extends Plugin {
 
         // Get a list of all links within markdown files
         markdownFiles.forEach((mdFile: TFile) => {
-            if (outFile === null && mdFile.path == outFileName) {
-                outFile = mdFile;
-                return;
-            }
+            if (outFileNames.contains(mdFile.path)) return;
             const cache = this.app.metadataCache.getFileCache(mdFile);
             if (!cache) {
                 return;
@@ -354,40 +390,23 @@ export default class FindOrphanedFilesPlugin extends Plugin {
         // Ensure the canvas files have all been parsed before continuing.
         await Promise.all(canvasParsingPromises);
 
-        const notLinkedFiles = allFiles.filter((file) =>
-            this.isFileAnOrphan(file, links, dir)
+        const notLinkedFiles = allFiles.filter(
+            (file) =>
+                !outFileNames.contains(file.path) &&
+                this.isFileAnOrphan(file, links, dir)
         );
-        if (outFile) {
-            notLinkedFiles.remove(outFile);
-        }
-
-        let text = "";
-        let prefix: string;
-        if (this.settings.disableWorkingLinks) prefix = "	";
-        else prefix = "";
-
         this.sortOrphanedFiles(notLinkedFiles);
+        return notLinkedFiles;
+    }
 
-        notLinkedFiles.forEach((file) => {
-            text +=
-                prefix +
-                "- [[" +
-                this.app.metadataCache.fileToLinktext(file, "/", false) +
-                "]]\n";
-        });
-        await Utils.writeAndOpenFile(
-            this.app,
-            outFileName,
-            text,
-            this.settings.openOutputFile
-        );
-        const endTime = Date.now();
-        const diff = endTime - startTime;
-        if (diff > 1000) {
-            new Notice(
-                `Found ${notLinkedFiles.length} orphaned files in ${diff}ms`
-            );
-        }
+    formatOrphanedFiles(files: TFile[]): string {
+        const prefix = this.settings.disableWorkingLinks ? "\t" : "";
+        return files
+            .map(
+                (file) =>
+                    `${prefix}- [[${this.app.metadataCache.fileToLinktext(file, "/", false)}]]`
+            )
+            .join("\n");
     }
 
     sortOrphanedFiles(files: TFile[]) {
@@ -540,16 +559,24 @@ export default class FindOrphanedFilesPlugin extends Plugin {
     }
 
     async findBrokenLinks() {
-        const outFileName = this.settings.unresolvedLinksOutputFileName + ".md";
+        await Utils.writeAndOpenFile(
+            this.app,
+            this.settings.unresolvedLinksOutputFileName + ".md",
+            this.formatBrokenLinks(this.getBrokenLinks()),
+            this.settings.openOutputFile
+        );
+    }
+
+    getBrokenLinks(): BrokenLink[] {
+        const outFileNames = [
+            this.settings.unresolvedLinksOutputFileName + ".md",
+            this.settings.allChecksOutputFileName + ".md",
+        ];
         const links: BrokenLink[] = [];
         const brokenLinks = this.app.metadataCache.unresolvedLinks;
 
         for (const sourceFilepath in brokenLinks) {
-            if (
-                sourceFilepath ==
-                this.settings.unresolvedLinksOutputFileName + ".md"
-            )
-                continue;
+            if (outFileNames.contains(sourceFilepath)) continue;
 
             const fileType = sourceFilepath.substring(
                 sourceFilepath.lastIndexOf(".") + 1
@@ -596,17 +623,16 @@ export default class FindOrphanedFilesPlugin extends Plugin {
                 }
             }
         }
-        await Utils.writeAndOpenFile(
-            this.app,
-            outFileName,
-            [
-                "Don't forget that creating the file from here may create the file in the wrong directory!",
-                ...links.map(
-                    (e) => `- [[${e.link}]] in [[${e.files.join("]], [[")}]]`
-                ),
-            ].join("\n"),
-            this.settings.openOutputFile
-        );
+        return links;
+    }
+
+    formatBrokenLinks(links: BrokenLink[]): string {
+        return [
+            "Don't forget that creating the file from here may create the file in the wrong directory!",
+            ...links.map(
+                (e) => `- [[${e.link}]] in [[${e.files.join("]], [[")}]]`
+            ),
+        ].join("\n");
     }
 
     async findFilesWithoutTags() {
@@ -650,6 +676,58 @@ export default class FindOrphanedFilesPlugin extends Plugin {
             text,
             this.settings.openOutputFile
         );
+    }
+
+    async runAllChecks() {
+        const startTime = Date.now();
+        const sections: string[] = [];
+
+        if (this.settings.allChecksIncludeOrphanedFiles) {
+            const orphanedFiles = await this.getOrphanedFiles();
+            sections.push(
+                `## Orphaned files (${orphanedFiles.length})`,
+                this.formatOrphanedFiles(orphanedFiles)
+            );
+        }
+        if (this.settings.allChecksIncludeBrokenLinks) {
+            const brokenLinks = this.getBrokenLinks();
+            sections.push(
+                `## Broken links (${brokenLinks.length})`,
+                this.formatBrokenLinks(brokenLinks)
+            );
+        }
+        if (this.settings.allChecksIncludeEmptyFiles) {
+            const emptyFiles = await this.getEmptyFiles();
+            sections.push(
+                `## Empty files (${emptyFiles.length})`,
+                this.formatFileList(emptyFiles)
+            );
+        }
+        if (this.settings.allChecksIncludeEmptyFolders) {
+            const emptyFolders = this.getEmptyFolders();
+            sections.push(
+                `## Empty folders (${emptyFolders.length})`,
+                this.formatFileList(emptyFolders)
+            );
+        }
+
+        if (sections.length === 0) {
+            new Notice(
+                "Please enable at least one check in the plugin settings"
+            );
+            return;
+        }
+
+        await Utils.writeAndOpenFile(
+            this.app,
+            this.settings.allChecksOutputFileName + ".md",
+            sections.filter((section) => section.length > 0).join("\n\n"),
+            this.settings.openOutputFile
+        );
+        const diff = Date.now() - startTime;
+        if (diff > 1000) {
+            new Notice(`Ran all checks in ${diff}ms`);
+        }
     }
 
     /**
